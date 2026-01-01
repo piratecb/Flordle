@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:projeto_prog_mobile_wordle/screens/teste_firebase_simples.dart';
+import 'package:projeto_prog_mobile_wordle/screens/admin_painel.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,7 @@ class _wordleState extends State<wordle> {
       routes: {
         '/': (context) => HomeScreen(),
         '/teste': (context) => TesteFirebaseSimples(),
+        '/admin': (context) => AdminPainel(),
       },
     );
   }
@@ -50,6 +52,13 @@ class HomeScreen extends StatelessWidget {
             tooltip: 'Testar Firebase',
             onPressed: () {
               Navigator.pushNamed(context, '/teste');
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.admin_panel_settings),
+            tooltip: 'Painel Admin',
+            onPressed: () {
+              Navigator.pushNamed(context, '/admin');
             },
           ),
         ],
