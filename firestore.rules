@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ========================================
+    // DEVELOPMENT MODE - Allow all access
+    // ========================================
+    // WARNING: Change these rules before production!
+
+    // Games collection - stores completed games
+    match /games/{gameId} {
+      allow read, write: if true;
+    }
+
+    // Statistics collection - player stats
+    match /statistics/{playerName} {
+      allow read, write: if true;
+    }
+
+    // Daily words collection - the word for each day
+    match /daily_words/{date} {
+      allow read, write: if true;
+    }
+
+    // Players collection (optional)
+    match /players/{playerId} {
+      allow read, write: if true;
+    }
+  }
+}
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:projeto_prog_mobile_wordle/screens/teste_firebase_simples.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,135 +26,164 @@ class _wordleState extends State<wordle> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        backgroundColor: Colors.grey[850],
-        appBar: AppBar(
-          title: Text('Wordle'),
-          backgroundColor: Colors.grey[600],
-        ),
-        body: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                children: [
-                  Row( //Quadrados das letras
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                      letraCaixa('', Colors.grey[900]!),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Expanded(child: Container()),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Row( //Teclado
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      teclaBotao('Q'),
-                      teclaBotao('W'),
-                      teclaBotao('E'),
-                      teclaBotao('R'),
-                      teclaBotao('T'),
-                      teclaBotao('Y'),
-                      teclaBotao('U'),
-                      teclaBotao('I'),
-                      teclaBotao('O'),
-                      teclaBotao('P'),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      teclaBotao('A'),
-                      teclaBotao('S'),
-                      teclaBotao('D'),
-                      teclaBotao('F'),
-                      teclaBotao('G'),
-                      teclaBotao('H'),
-                      teclaBotao('J'),
-                      teclaBotao('K'),
-                      teclaBotao('L'),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      teclaBotaoGrande('ENTER'),
-                      teclaBotao('Z'),
-                      teclaBotao('X'),
-                      teclaBotao('C'),
-                      teclaBotao('V'),
-                      teclaBotao('B'),
-                      teclaBotao('N'),
-                      teclaBotao('M'),
-                      teclaBotaoGrande('⌫'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => HomeScreen(),
+        '/teste': (context) => TesteFirebaseSimples(),
+      },
+    );
+  }
+}
+
+// Tela inicial do Wordle
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[850],
+      appBar: AppBar(
+        title: Text('Wordle'),
+        backgroundColor: Colors.grey[600],
+        actions: [
+          IconButton(
+            icon: Icon(Icons.cloud),
+            tooltip: 'Testar Firebase',
+            onPressed: () {
+              Navigator.pushNamed(context, '/teste');
+            },
+          ),
+        ],
       ),
+      body: WordleBody(),
+    );
+  }
+}
+
+// Corpo do jogo Wordle
+class WordleBody extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Column(
+            children: [
+              Row( //Quadrados das letras
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                  letraCaixa('', Colors.grey[900]!),
+                ],
+              ),
+            ],
+          ),
+        ),
+        Expanded(child: Container()),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            children: [
+              Row( //Teclado
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  teclaBotao('Q'),
+                  teclaBotao('W'),
+                  teclaBotao('E'),
+                  teclaBotao('R'),
+                  teclaBotao('T'),
+                  teclaBotao('Y'),
+                  teclaBotao('U'),
+                  teclaBotao('I'),
+                  teclaBotao('O'),
+                  teclaBotao('P'),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  teclaBotao('A'),
+                  teclaBotao('S'),
+                  teclaBotao('D'),
+                  teclaBotao('F'),
+                  teclaBotao('G'),
+                  teclaBotao('H'),
+                  teclaBotao('J'),
+                  teclaBotao('K'),
+                  teclaBotao('L'),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  teclaBotaoGrande('ENTER'),
+                  teclaBotao('Z'),
+                  teclaBotao('X'),
+                  teclaBotao('C'),
+                  teclaBotao('V'),
+                  teclaBotao('B'),
+                  teclaBotao('N'),
+                  teclaBotao('M'),
+                  teclaBotaoGrande('⌫'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

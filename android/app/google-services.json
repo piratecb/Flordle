@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "746604535148",
+    "project_id": "flordle-tpsi2526",
+    "storage_bucket": "flordle-tpsi2526.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:746604535148:android:01436941a0b8a5634ae749",
+        "android_client_info": {
+          "package_name": "com.example.projeto_prog_mobile_wordle"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsO3X73hFu65N4-TtHZXyom9JQZxap2Ac"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
