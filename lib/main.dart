@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
 import 'dart:convert';
+import 'dart:async';
 import 'firebase_options.dart';
 import 'package:projeto_prog_mobile_wordle/data/word_list.dart';
 import 'package:projeto_prog_mobile_wordle/screens/login_screen.dart';
@@ -202,6 +203,17 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.amber[700]!,
               onTap: () => _selectMode(GameMode.unlimited),
             ),
+
+            const SizedBox(height: 16),
+
+            // Modo Rapid Fire
+            _buildModeCard(
+              icon: Icons.timer_rounded,
+              title: 'Modo Rapid Fire',
+              subtitle: 'Adivinha rápido! Tens tempo limitado por tentativa',
+              color: Colors.red[600]!,
+              onTap: () => _selectMode(GameMode.rapidFire),
+            ),
           ],
         ),
       ),
@@ -268,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // Enum para modo de jogo
-enum GameMode { daily, unlimited }
+enum GameMode { daily, unlimited, rapidFire }
 
 // Corpo do jogo Wordle
 class WordleBody extends StatefulWidget {
@@ -323,6 +335,11 @@ class _WordleBodyState extends State<WordleBody> {
   // 0 = default, 1 = wrong (dark gray), 2 = wrong position (yellow), 3 = correct (green)
   Map<String, int> keyboardColors = {};
 
+  // Rapid Fire mode timer
+  Timer? _rapidFireTimer;
+  int _secondsRemaining = 0;
+  static const int rapidFireTimeLimit = 20; // seconds per guess
+
   @override
   void initState() {
     super.initState();
@@ -334,6 +351,11 @@ class _WordleBodyState extends State<WordleBody> {
 
     if (widget.gameMode == GameMode.daily) {
       await _loadDailyGameState();
+    }
+
+    // Start timer for Rapid Fire mode
+    if (widget.gameMode == GameMode.rapidFire) {
+      _startRapidFireTimer();
     }
 
     setState(() {
@@ -422,12 +444,84 @@ class _WordleBodyState extends State<WordleBody> {
       targetWord = WordList.getWordForDate(DateTime.now());
       print('🎯 Palavra do dia: $targetWord');
     } else {
-      // Modo ilimitado: palavra aleatória
+      // Modo ilimitado/rapid fire: palavra aleatória
       final random = Random();
       final wordIndex = random.nextInt(WordList.words.length);
       targetWord = WordList.words[wordIndex];
       print('🎲 Palavra aleatória: $targetWord');
     }
+  }
+
+  // Rapid Fire timer methods
+  void _startRapidFireTimer() {
+    _cancelRapidFireTimer();
+    _secondsRemaining = rapidFireTimeLimit;
+    _rapidFireTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _secondsRemaining--;
+      });
+      if (_secondsRemaining <= 0) {
+        _onRapidFireTimeout();
+      }
+    });
+  }
+
+  void _cancelRapidFireTimer() {
+    _rapidFireTimer?.cancel();
+    _rapidFireTimer = null;
+  }
+
+  void _onRapidFireTimeout() {
+    _cancelRapidFireTimer();
+
+    if (gameOver) return;
+
+    // Mark the current row as all wrong (gray) since time ran out
+    setState(() {
+      // Clear the current row letters (user didn't finish typing)
+      for (int i = 0; i < wordLength; i++) {
+        if (grid[currentRow][i].isEmpty) {
+          grid[currentRow][i] = '-'; // placeholder for skipped
+        }
+        colorGrid[currentRow][i] = 1; // Mark as wrong
+      }
+
+      currentRow++;
+      currentCol = 0;
+    });
+
+    // Check if game over
+    if (currentRow >= maxAttempts) {
+      setState(() {
+        gameOver = true;
+        won = false;
+      });
+      _showGameEndDialog(false);
+    } else {
+      // Start timer for next guess
+      _startRapidFireTimer();
+
+      // Show a quick notification that time ran out
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.timer_off, color: Colors.white),
+              const SizedBox(width: 8),
+              Text('Tempo esgotado! Tentativa ${currentRow} de $maxAttempts'),
+            ],
+          ),
+          duration: const Duration(seconds: 1),
+          backgroundColor: Colors.red[700],
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _cancelRapidFireTimer();
+    super.dispose();
   }
 
   // Add a letter to the current position
@@ -476,6 +570,7 @@ class _WordleBodyState extends State<WordleBody> {
 
       // Check if won
       if (guess == targetWord) {
+        _cancelRapidFireTimer(); // Stop timer on win
         setState(() {
           gameOver = true;
           won = true;
@@ -492,11 +587,15 @@ class _WordleBodyState extends State<WordleBody> {
 
       // Check if game over (no more attempts)
       if (currentRow >= maxAttempts) {
+        _cancelRapidFireTimer(); // Stop timer on loss
         setState(() {
           gameOver = true;
           won = false;
         });
         _showGameEndDialog(false);
+      } else if (widget.gameMode == GameMode.rapidFire) {
+        // Restart timer for next guess in Rapid Fire mode
+        _startRapidFireTimer();
       }
     }
   }
@@ -694,6 +793,23 @@ class _WordleBodyState extends State<WordleBody> {
                 ),
               ),
             )
+          else if (widget.gameMode == GameMode.rapidFire)
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _resetGame();
+                _startRapidFireTimer();
+              },
+              icon: const Icon(Icons.timer_rounded),
+              label: const Text('Jogar Novamente'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[600],
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            )
           else
             ElevatedButton.icon(
               onPressed: () {
@@ -782,6 +898,39 @@ class _WordleBodyState extends State<WordleBody> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        // Rapid Fire timer display
+        if (widget.gameMode == GameMode.rapidFire && !gameOver)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.timer_rounded,
+                  color: _secondsRemaining <= 5 ? Colors.red[400] : Colors.white,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '$_secondsRemaining',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: _secondsRemaining <= 5 ? Colors.red[400] : Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'segundos',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[400],
                   ),
                 ),
               ],
