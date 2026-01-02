@@ -3,6 +3,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:projeto_prog_mobile_wordle/screens/teste_firebase_simples.dart';
 import 'package:projeto_prog_mobile_wordle/screens/admin_painel.dart';
+import 'package:projeto_prog_mobile_wordle/screens/login_screen.dart';
+import 'package:projeto_prog_mobile_wordle/screens/stats_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +34,8 @@ class _wordleState extends State<wordle> {
         '/': (context) => HomeScreen(),
         '/teste': (context) => const TesteFirebaseSimples(),
         '/admin': (context) => const AdminPainel(),
+        '/login': (context) => LoginScreen(),
+        '/stats': (context) => StatsScreen(),
       },
     );
   }
@@ -47,6 +51,13 @@ class HomeScreen extends StatelessWidget {
         title: Text('Wordle'),
         backgroundColor: Colors.grey[600],
         actions: [
+          IconButton(
+            icon: Icon(Icons.bar_chart),
+            tooltip: 'Estatísticas',
+            onPressed: () {
+              Navigator.pushNamed(context, '/stats');
+            },
+          ),
           IconButton(
             icon: Icon(Icons.cloud),
             tooltip: 'Testar Firebase',

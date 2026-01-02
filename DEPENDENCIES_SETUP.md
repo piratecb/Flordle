@@ -5,6 +5,7 @@
 ### **Core Dependencies:**
 - ✅ `firebase_core: ^4.3.0` - Firebase initialization
 - ✅ `cloud_firestore: ^6.1.1` - Cloud database
+- ✅ `firebase_auth: ^5.5.4` - Autenticação de utilizadores
 - ✅ `cupertino_icons: ^1.0.8` - iOS style icons
 
 ### **New Dependencies Added:**
@@ -58,6 +59,37 @@ Admin dashboard with:
 - ✅ Win rate calculations
 - ✅ Guess distribution display
 
+#### `lib/screens/login_screen.dart` ✨ NEW
+Login/Register screen with:
+- ✅ Login com email/password
+- ✅ Registo de nova conta
+- ✅ Login anónimo (jogar sem conta)
+- ✅ Recuperação de password
+- ✅ Validação de formulário
+- ✅ Mensagens de erro em Português
+
+#### `lib/screens/stats_screen.dart` ✨ NEW
+Statistics screen with:
+- ✅ Perfil do utilizador
+- ✅ Estatísticas (jogos, vitórias, streak)
+- ✅ Distribuição de tentativas (gráfico)
+- ✅ Opção de logout
+- ✅ Link para login se for convidado
+
+---
+
+### **3. Auth Service**
+#### `lib/services/auth_service.dart` ✨ NEW
+Authentication service with:
+- ✅ Login com email/password
+- ✅ Registo com email/password
+- ✅ Login anónimo
+- ✅ Logout
+- ✅ Recuperação de password
+- ✅ Converter conta anónima para permanente
+- ✅ Guardar/atualizar estatísticas do utilizador
+- ✅ Mensagens de erro em Português
+
 ---
 
 ### **3. Data Models** (Already existed, verified complete)
@@ -85,6 +117,19 @@ flutter pub get
 ```
 
 This will download and install all the new dependencies.
+
+---
+
+## 🔐 Ativar Autenticação no Firebase
+
+Para o sistema de login funcionar, é necessário ativar a autenticação no Firebase Console:
+
+1. Acede a: https://console.firebase.google.com/project/flordle-tpsi2526/authentication
+2. Clica em "Get started" ou "Começar"
+3. Na secção "Sign-in method", ativa:
+   - **Email/Password** - para login tradicional
+   - **Anonymous** - para jogar sem conta
+4. Clica em cada opção e ativa o toggle "Enable"
 
 ---
 
