@@ -139,6 +139,8 @@ class AuthService {
       'currentStreak': 0,
       'maxStreak': 0,
       'guessDistribution': {'1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0},
+      'totalAttempts': 0,
+      'averageAttempts': 0.0,
     }, SetOptions(merge: true));
   }
 
@@ -197,6 +199,10 @@ class AuthService {
           distribution[attempts.toString()] = (distribution[attempts.toString()] ?? 0) + 1;
         }
 
+        // Calculate total and average attempts (only for won games)
+        int totalAttempts = (data['totalAttempts'] ?? 0) + (won ? attempts : 0);
+        double averageAttempts = gamesWon > 0 ? totalAttempts / gamesWon : 0.0;
+
         transaction.set(userRef, {
           'gamesPlayed': gamesPlayed,
           'gamesWon': gamesWon,
@@ -204,6 +210,8 @@ class AuthService {
           'maxStreak': maxStreak,
           'guessDistribution': distribution,
           'lastPlayed': FieldValue.serverTimestamp(),
+          'totalAttempts': totalAttempts,
+          'averageAttempts': averageAttempts,
         }, SetOptions(merge: true));
       });
 

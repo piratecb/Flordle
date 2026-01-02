@@ -8,6 +8,7 @@ class GameModel {
   final int attempts;
   final DateTime? timestamp;
   final String date;
+  final int? durationSeconds; // Duração do jogo em segundos
 
   GameModel({
     this.id,
@@ -18,6 +19,7 @@ class GameModel {
     required this.attempts,
     this.timestamp,
     required this.date,
+    this.durationSeconds,
   });
 
   /// Create GameModel from Firestore document
@@ -33,6 +35,7 @@ class GameModel {
           ? DateTime.parse(map['timestamp'].toString())
           : null,
       date: map['date'] as String,
+      durationSeconds: map['durationSeconds'] as int?,
     );
   }
 
@@ -45,6 +48,7 @@ class GameModel {
       'won': won,
       'attempts': attempts,
       'date': date,
+      if (durationSeconds != null) 'durationSeconds': durationSeconds,
     };
   }
 

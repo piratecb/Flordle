@@ -148,6 +148,12 @@ class FirebaseService {
           newGuessDistribution[attemptsKey] = (newGuessDistribution[attemptsKey] ?? 0) + 1;
         }
 
+        // Calculate average attempts (only for won games)
+        int newTotalAttempts = currentStats.totalAttempts + (game.won ? game.attempts : 0);
+        double newAverageAttempts = newGamesWon > 0
+            ? newTotalAttempts / newGamesWon
+            : 0.0;
+
         await docRef.update({
           'gamesPlayed': newGamesPlayed,
           'gamesWon': newGamesWon,
@@ -156,6 +162,8 @@ class FirebaseService {
           'maxStreak': newMaxStreak,
           'guessDistribution': newGuessDistribution,
           'lastPlayed': DateTime.now().toIso8601String(),
+          'totalAttempts': newTotalAttempts,
+          'averageAttempts': newAverageAttempts,
         });
 
         print('✅ Estatísticas atualizadas');
@@ -166,6 +174,9 @@ class FirebaseService {
           guessDistribution[game.attempts.toString()] = 1;
         }
 
+        int totalAttempts = game.won ? game.attempts : 0;
+        double averageAttempts = game.won ? game.attempts.toDouble() : 0.0;
+
         PlayerStats newStats = PlayerStats(
           playerName: playerName,
           gamesPlayed: 1,
@@ -175,6 +186,8 @@ class FirebaseService {
           winRate: game.won ? 100 : 0,
           guessDistribution: guessDistribution,
           lastPlayed: DateTime.now(),
+          totalAttempts: totalAttempts,
+          averageAttempts: averageAttempts,
         );
 
         await docRef.set(newStats.toMap());

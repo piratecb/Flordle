@@ -8,6 +8,8 @@ class PlayerStats {
   final int winRate;
   final Map<String, int> guessDistribution;
   final DateTime? lastPlayed;
+  final double averageAttempts;
+  final int totalAttempts;
 
   PlayerStats({
     required this.playerName,
@@ -18,6 +20,8 @@ class PlayerStats {
     required this.winRate,
     required this.guessDistribution,
     this.lastPlayed,
+    this.averageAttempts = 0.0,
+    this.totalAttempts = 0,
   });
 
   /// Create PlayerStats from Firestore document
@@ -41,6 +45,8 @@ class PlayerStats {
       lastPlayed: map['lastPlayed'] != null
           ? DateTime.parse(map['lastPlayed'].toString())
           : null,
+      averageAttempts: (map['averageAttempts'] as num?)?.toDouble() ?? 0.0,
+      totalAttempts: map['totalAttempts'] as int? ?? 0,
     );
   }
 
@@ -54,6 +60,8 @@ class PlayerStats {
       'maxStreak': maxStreak,
       'winRate': winRate,
       'guessDistribution': guessDistribution,
+      'averageAttempts': averageAttempts,
+      'totalAttempts': totalAttempts,
     };
   }
 
@@ -67,7 +75,7 @@ class PlayerStats {
 
   @override
   String toString() {
-    return 'PlayerStats(player: $playerName, played: $gamesPlayed, won: $gamesWon, winRate: $winRate%, streak: $currentStreak)';
+    return 'PlayerStats(player: $playerName, played: $gamesPlayed, won: $gamesWon, winRate: $winRate%, streak: $currentStreak, avgAttempts: ${averageAttempts.toStringAsFixed(1)})';
   }
 }
 

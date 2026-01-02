@@ -6,6 +6,7 @@ import 'package:projeto_prog_mobile_wordle/screens/admin_painel.dart';
 import 'package:projeto_prog_mobile_wordle/data/word_list.dart';
 import 'package:projeto_prog_mobile_wordle/screens/login_screen.dart';
 import 'package:projeto_prog_mobile_wordle/screens/stats_screen.dart';
+import 'package:projeto_prog_mobile_wordle/services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,9 +90,15 @@ class WordleBody extends StatefulWidget {
 }
 
 class _WordleBodyState extends State<WordleBody> {
+  // Services
+  final AuthService _authService = AuthService();
+
   // Game state
   static const int maxAttempts = 6;
   static const int wordLength = 5;
+
+  // Stats tracking
+  bool _statsSaved = false;
 
   // Grid of letters - 6 rows x 5 columns
   List<List<String>> grid = List.generate(
@@ -294,6 +301,12 @@ class _WordleBodyState extends State<WordleBody> {
 
   // Show game end dialog
   void _showGameEndDialog(bool won) {
+    // Save stats only once per game
+    if (!_statsSaved) {
+      _statsSaved = true;
+      _saveGameStats(won);
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -308,9 +321,26 @@ class _WordleBodyState extends State<WordleBody> {
                   : 'A palavra era: $targetWord',
               style: const TextStyle(fontSize: 18),
             ),
+            const SizedBox(height: 16),
+            if (_authService.currentUser != null)
+              Text(
+                'Estatísticas guardadas!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
           ],
         ),
         actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.pushNamed(context, '/stats');
+            },
+            child: const Text('Ver Estatísticas'),
+          ),
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
@@ -321,6 +351,21 @@ class _WordleBodyState extends State<WordleBody> {
         ],
       ),
     );
+  }
+
+  // Save game stats to Firebase
+  Future<void> _saveGameStats(bool won) async {
+    final attempts = currentRow + 1; // currentRow is 0-indexed
+
+    try {
+      await _authService.updateUserStats(
+        won: won,
+        attempts: attempts,
+      );
+      print('✅ Estatísticas do jogo salvas');
+    } catch (e) {
+      print('❌ Erro ao salvar estatísticas: $e');
+    }
   }
 
   // Reset the game
@@ -339,6 +384,7 @@ class _WordleBodyState extends State<WordleBody> {
       gameOver = false;
       won = false;
       keyboardColors = {};
+      _statsSaved = false;
       _selectDailyWord();
     });
   }

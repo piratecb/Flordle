@@ -164,6 +164,7 @@ class _StatsScreenState extends State<StatsScreen> {
     final gamesWon = _stats?['gamesWon'] ?? 0;
     final currentStreak = _stats?['currentStreak'] ?? 0;
     final maxStreak = _stats?['maxStreak'] ?? 0;
+    final averageAttempts = (_stats?['averageAttempts'] as num?)?.toDouble() ?? 0.0;
     final winRate = gamesPlayed > 0
         ? (gamesWon / gamesPlayed * 100).round()
         : 0;
@@ -190,6 +191,24 @@ class _StatsScreenState extends State<StatsScreen> {
             _buildStatItem(maxStreak.toString(), 'Melhor\nStreak'),
           ],
         ),
+        const SizedBox(height: 16),
+        if (gamesWon > 0)
+          Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.green[800],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Média: ${averageAttempts.toStringAsFixed(1)} tentativas',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
