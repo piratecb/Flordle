@@ -351,12 +351,14 @@ class WordList {
   ];
 
   /// Retorna a palavra para uma data específica
-  /// Usa o dia do ano para garantir consistência
+  /// Usa ano + dia do ano para garantir palavras diferentes a cada ano
   static String getWordForDate(DateTime date) {
     // Calcula o dia do ano (0-364)
     final dayOfYear = date.difference(DateTime(date.year, 1, 1)).inDays;
-    // Usa módulo para ciclar se houver mais de 365 dias
-    final index = dayOfYear % words.length;
+    // Combina ano e dia para gerar um índice único
+    // Assim, 2 Jan 2026 terá palavra diferente de 2 Jan 2027
+    final seed = (date.year * 366) + dayOfYear;
+    final index = seed % words.length;
     return words[index];
   }
 
