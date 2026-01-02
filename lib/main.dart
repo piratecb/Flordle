@@ -30,8 +30,8 @@ class _wordleState extends State<wordle> {
       initialRoute: '/',
       routes: {
         '/': (context) => HomeScreen(),
-        '/teste': (context) => TesteFirebaseSimples(),
-        '/admin': (context) => AdminPainel(),
+        '/teste': (context) => const TesteFirebaseSimples(),
+        '/admin': (context) => const AdminPainel(),
       },
     );
   }
@@ -63,133 +63,266 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: WordleBody(),
+      body: SafeArea(
+        child: WordleBody(),
+      ),
     );
   }
 }
 
 // Corpo do jogo Wordle
-class WordleBody extends StatelessWidget {
+class WordleBody extends StatefulWidget {
+  @override
+  State<WordleBody> createState() => _WordleBodyState();
+}
+
+class _WordleBodyState extends State<WordleBody> {
+  // Game state
+  static const int maxAttempts = 6;
+  static const int wordLength = 5;
+
+  // Grid of letters - 6 rows x 5 columns
+  List<List<String>> grid = List.generate(
+    maxAttempts,
+    (_) => List.generate(wordLength, (_) => ''),
+  );
+
+  // Current position
+  int currentRow = 0;
+  int currentCol = 0;
+
+  // Add a letter to the current position
+  void _addLetter(String letter) {
+    if (currentRow < maxAttempts && currentCol < wordLength) {
+      setState(() {
+        grid[currentRow][currentCol] = letter;
+        currentCol++;
+      });
+    }
+  }
+
+  // Remove the last letter (backspace)
+  void _removeLetter() {
+    if (currentCol > 0) {
+      setState(() {
+        currentCol--;
+        grid[currentRow][currentCol] = '';
+      });
+    }
+  }
+
+  // Submit the current guess (ENTER)
+  void _submitGuess() {
+    if (currentCol == wordLength) {
+      // Move to next row
+      setState(() {
+        currentRow++;
+        currentCol = 0;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // Game Grid - Responsive letter boxes
         Padding(
           padding: const EdgeInsets.all(10.0),
-          child: Column(
-            children: [
-              Row( //Quadrados das letras
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                  letraCaixa('', Colors.grey[900]!),
-                ],
-              ),
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate box size based on available width
+              // 5 boxes with margins (6px each side = 12px per box)
+              final double maxBoxWidth = (constraints.maxWidth - (5 * 6)) / 5;
+              // Limit the size for larger screens
+              final double boxSize = maxBoxWidth.clamp(40.0, 62.0);
+
+              return Column(
+                children: List.generate(maxAttempts, (rowIndex) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(wordLength, (colIndex) {
+                      return _letraCaixa(
+                        grid[rowIndex][colIndex],
+                        Colors.grey[900]!,
+                        boxSize,
+                      );
+                    }),
+                  );
+                }),
+              );
+            },
           ),
         ),
         Expanded(child: Container()),
+        // Responsive Keyboard
         Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Row( //Teclado
-                mainAxisAlignment: MainAxisAlignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate key sizes based on available width
+              final double keySpacing = 4.0;
+              final int keysInTopRow = 10;
+              final double availableWidth = constraints.maxWidth - (keySpacing * (keysInTopRow + 1));
+              final double keyWidth = availableWidth / keysInTopRow;
+              final double keyHeight = keyWidth * 1.3;
+
+              return Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  teclaBotao('Q'),
-                  teclaBotao('W'),
-                  teclaBotao('E'),
-                  teclaBotao('R'),
-                  teclaBotao('T'),
-                  teclaBotao('Y'),
-                  teclaBotao('U'),
-                  teclaBotao('I'),
-                  teclaBotao('O'),
-                  teclaBotao('P'),
+                  // Row 1: Q W E R T Y U I O P
+                  _buildKeyboardRow(
+                    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+                    keyWidth,
+                    keyHeight,
+                    keySpacing,
+                    _addLetter,
+                  ),
+                  SizedBox(height: keySpacing),
+                  // Row 2: A S D F G H J K L
+                  _buildKeyboardRow(
+                    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+                    keyWidth,
+                    keyHeight,
+                    keySpacing,
+                    _addLetter,
+                  ),
+                  SizedBox(height: keySpacing),
+                  // Row 3: ENTER Z X C V B N M ⌫
+                  _buildBottomKeyboardRow(
+                    keyWidth,
+                    keyHeight,
+                    keySpacing,
+                    _addLetter,
+                    _removeLetter,
+                    _submitGuess,
+                  ),
                 ],
+              );
+            },
+          ),
+        ),
+        SizedBox(height: 4),
+      ],
+    );
+  }
+
+  Widget _buildKeyboardRow(
+    List<String> letters,
+    double keyWidth,
+    double keyHeight,
+    double spacing,
+    Function(String) onKeyPressed,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: letters.map((letter) => Padding(
+        padding: EdgeInsets.symmetric(horizontal: spacing / 2),
+        child: SizedBox(
+          width: keyWidth,
+          height: keyHeight,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  teclaBotao('A'),
-                  teclaBotao('S'),
-                  teclaBotao('D'),
-                  teclaBotao('F'),
-                  teclaBotao('G'),
-                  teclaBotao('H'),
-                  teclaBotao('J'),
-                  teclaBotao('K'),
-                  teclaBotao('L'),
-                ],
+            ),
+            onPressed: () => onKeyPressed(letter),
+            child: Text(
+              letter,
+              style: TextStyle(
+                fontSize: keyWidth * 0.45,
+                fontWeight: FontWeight.bold,
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  teclaBotaoGrande('ENTER'),
-                  teclaBotao('Z'),
-                  teclaBotao('X'),
-                  teclaBotao('C'),
-                  teclaBotao('V'),
-                  teclaBotao('B'),
-                  teclaBotao('N'),
-                  teclaBotao('M'),
-                  teclaBotaoGrande('⌫'),
-                ],
+            ),
+          ),
+        ),
+      )).toList(),
+    );
+  }
+
+  Widget _buildBottomKeyboardRow(
+    double keyWidth,
+    double keyHeight,
+    double spacing,
+    Function(String) onKeyPressed,
+    VoidCallback onBackspace,
+    VoidCallback onEnter,
+  ) {
+    final List<String> middleLetters = ['Z', 'X', 'C', 'V', 'B', 'N', 'M'];
+    final double wideKeyWidth = keyWidth * 1.5;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // ENTER key
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: spacing / 2),
+          child: SizedBox(
+            width: wideKeyWidth,
+            height: keyHeight,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
-            ],
+              onPressed: onEnter,
+              child: Text(
+                'ENTER',
+                style: TextStyle(
+                  fontSize: keyWidth * 0.32,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Middle letters
+        ...middleLetters.map((letter) => Padding(
+          padding: EdgeInsets.symmetric(horizontal: spacing / 2),
+          child: SizedBox(
+            width: keyWidth,
+            height: keyHeight,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              onPressed: () => onKeyPressed(letter),
+              child: Text(
+                letter,
+                style: TextStyle(
+                  fontSize: keyWidth * 0.45,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        )),
+        // Backspace key
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: spacing / 2),
+          child: SizedBox(
+            width: wideKeyWidth,
+            height: keyHeight,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              onPressed: onBackspace,
+              child: Icon(
+                Icons.backspace_outlined,
+                size: keyWidth * 0.5,
+              ),
+            ),
           ),
         ),
       ],
@@ -197,48 +330,26 @@ class WordleBody extends StatelessWidget {
   }
 }
 
-Container letraCaixa(String letra, Color cor) { // "CSS" das caixas de letras
+// Responsive letter box widget
+Widget _letraCaixa(String letra, Color cor, double size) {
   return Container(
-    width: 50,
-    height: 50,
+    width: size,
+    height: size,
     margin: EdgeInsets.all(3),
     decoration: BoxDecoration(
       color: cor,
       border: Border.all(color: Colors.grey),
+      borderRadius: BorderRadius.circular(2),
     ),
     child: Center(
       child: Text(
         letra,
-        style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+        style: TextStyle(
+          fontSize: size * 0.5,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
       ),
-    ),
-  );
-}
-
-Padding teclaBotao(String letra) { // "CSS" das teclas pequenas
-  return Padding(
-    padding: const EdgeInsets.all(2.0),
-    child: ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        minimumSize: Size(32, 42),
-        padding: EdgeInsets.symmetric(horizontal: 4),
-      ),
-      onPressed: () {},
-      child: Text(letra, style: TextStyle(fontSize: 12)),
-    ),
-  );
-}
-
-Padding teclaBotaoGrande(String texto) { // "CSS" das teclas grandes
-  return Padding(
-    padding: const EdgeInsets.all(2.0),
-    child: ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        minimumSize: Size(56, 42),
-        padding: EdgeInsets.symmetric(horizontal: 4),
-      ),
-      onPressed: () {},
-      child: Text(texto, style: TextStyle(fontSize: 12)),
     ),
   );
 }
