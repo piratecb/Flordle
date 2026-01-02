@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:projeto_prog_mobile_wordle/screens/teste_firebase_simples.dart';
 import 'package:projeto_prog_mobile_wordle/screens/admin_painel.dart';
+import 'package:projeto_prog_mobile_wordle/data/word_list.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,12 +88,47 @@ class _WordleBodyState extends State<WordleBody> {
     (_) => List.generate(wordLength, (_) => ''),
   );
 
+  // Grid of colors - 6 rows x 5 columns
+  // 0 = default (gray/dark), 1 = wrong (dark gray), 2 = wrong position (yellow), 3 = correct (green)
+  List<List<int>> colorGrid = List.generate(
+    maxAttempts,
+    (_) => List.generate(wordLength, (_) => 0),
+  );
+
   // Current position
   int currentRow = 0;
   int currentCol = 0;
 
+  // Today's word
+  late String targetWord;
+
+  // Game over state
+  bool gameOver = false;
+  bool won = false;
+
+  // Keyboard letter colors
+  // 0 = default, 1 = wrong (dark gray), 2 = wrong position (yellow), 3 = correct (green)
+  Map<String, int> keyboardColors = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _selectDailyWord();
+  }
+
+  // Select the daily word based on date
+  void _selectDailyWord() {
+    final now = DateTime.now();
+    // Use day of year as index to get a consistent daily word
+    final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
+    final wordIndex = dayOfYear % WordList.words.length;
+    targetWord = WordList.words[wordIndex];
+    print('🎯 Palavra do dia: $targetWord'); // Debug - remove in production
+  }
+
   // Add a letter to the current position
   void _addLetter(String letter) {
+    if (gameOver) return;
     if (currentRow < maxAttempts && currentCol < wordLength) {
       setState(() {
         grid[currentRow][currentCol] = letter;
@@ -103,6 +139,7 @@ class _WordleBodyState extends State<WordleBody> {
 
   // Remove the last letter (backspace)
   void _removeLetter() {
+    if (gameOver) return;
     if (currentCol > 0) {
       setState(() {
         currentCol--;
@@ -113,13 +150,186 @@ class _WordleBodyState extends State<WordleBody> {
 
   // Submit the current guess (ENTER)
   void _submitGuess() {
+    if (gameOver) return;
     if (currentCol == wordLength) {
+      // Get the current guess
+      String guess = grid[currentRow].join();
+
+      // Check if word is in the word list
+      if (!WordList.isValidWord(guess)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Palavra não existe na lista!'),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Validate and color the guess
+      _validateGuess(guess);
+
+      // Check if won
+      if (guess == targetWord) {
+        setState(() {
+          gameOver = true;
+          won = true;
+        });
+        _showGameEndDialog(true);
+        return;
+      }
+
       // Move to next row
       setState(() {
         currentRow++;
         currentCol = 0;
       });
+
+      // Check if game over (no more attempts)
+      if (currentRow >= maxAttempts) {
+        setState(() {
+          gameOver = true;
+          won = false;
+        });
+        _showGameEndDialog(false);
+      }
     }
+  }
+
+  // Validate the guess and set colors
+  void _validateGuess(String guess) {
+    // Create a map to track remaining letters in target word
+    Map<String, int> targetLetterCount = {};
+    for (int i = 0; i < targetWord.length; i++) {
+      String letter = targetWord[i];
+      targetLetterCount[letter] = (targetLetterCount[letter] ?? 0) + 1;
+    }
+
+    // First pass: Mark correct positions (green)
+    List<int> result = List.generate(wordLength, (_) => 1); // Start with all wrong (1)
+
+    for (int i = 0; i < wordLength; i++) {
+      if (guess[i] == targetWord[i]) {
+        result[i] = 3; // Correct position (green)
+        targetLetterCount[guess[i]] = targetLetterCount[guess[i]]! - 1;
+      }
+    }
+
+    // Second pass: Mark wrong positions (yellow)
+    for (int i = 0; i < wordLength; i++) {
+      if (result[i] != 3) { // Not already green
+        String letter = guess[i];
+        if (targetLetterCount.containsKey(letter) && targetLetterCount[letter]! > 0) {
+          result[i] = 2; // Wrong position (yellow)
+          targetLetterCount[letter] = targetLetterCount[letter]! - 1;
+        }
+      }
+    }
+
+    // Update the color grid and keyboard colors
+    setState(() {
+      colorGrid[currentRow] = result;
+
+      // Update keyboard colors - only upgrade, never downgrade
+      // Priority: green (3) > yellow (2) > gray (1) > default (0)
+      for (int i = 0; i < wordLength; i++) {
+        String letter = guess[i];
+        int currentColor = keyboardColors[letter] ?? 0;
+        int newColor = result[i];
+
+        // Only update if new color is "better" (higher priority)
+        if (newColor == 3) {
+          // Green always wins
+          keyboardColors[letter] = 3;
+        } else if (newColor == 2 && currentColor != 3) {
+          // Yellow only if not already green
+          keyboardColors[letter] = 2;
+        } else if (newColor == 1 && currentColor == 0) {
+          // Gray only if not yet colored
+          keyboardColors[letter] = 1;
+        }
+      }
+    });
+  }
+
+  // Get color from color code
+  Color _getColorFromCode(int code) {
+    switch (code) {
+      case 3:
+        return Colors.green; // Correct position
+      case 2:
+        return Colors.amber[700]!; // Wrong position (yellow/amber)
+      case 1:
+        return Colors.grey[700]!; // Wrong letter
+      default:
+        return Colors.grey[900]!; // Default/empty
+    }
+  }
+
+  // Get keyboard key color from color code
+  Color _getKeyboardColorFromCode(int code) {
+    switch (code) {
+      case 3:
+        return Colors.green; // Correct position
+      case 2:
+        return Colors.amber[700]!; // Wrong position (yellow/amber)
+      case 1:
+        return Colors.grey[700]!; // Wrong letter
+      default:
+        return Colors.grey[300]!; // Default keyboard color
+    }
+  }
+
+  // Show game end dialog
+  void _showGameEndDialog(bool won) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text(won ? '🎉 Parabéns!' : '😢 Fim de jogo'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              won
+                  ? 'Acertaste a palavra em ${currentRow + 1} tentativa${currentRow > 0 ? 's' : ''}!'
+                  : 'A palavra era: $targetWord',
+              style: const TextStyle(fontSize: 18),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _resetGame();
+            },
+            child: const Text('Jogar Novamente'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Reset the game
+  void _resetGame() {
+    setState(() {
+      grid = List.generate(
+        maxAttempts,
+        (_) => List.generate(wordLength, (_) => ''),
+      );
+      colorGrid = List.generate(
+        maxAttempts,
+        (_) => List.generate(wordLength, (_) => 0),
+      );
+      currentRow = 0;
+      currentCol = 0;
+      gameOver = false;
+      won = false;
+      keyboardColors = {};
+      _selectDailyWord();
+    });
   }
 
   @override
@@ -144,7 +354,7 @@ class _WordleBodyState extends State<WordleBody> {
                     children: List.generate(wordLength, (colIndex) {
                       return _letraCaixa(
                         grid[rowIndex][colIndex],
-                        Colors.grey[900]!,
+                        _getColorFromCode(colorGrid[rowIndex][colIndex]),
                         boxSize,
                       );
                     }),
@@ -216,29 +426,37 @@ class _WordleBodyState extends State<WordleBody> {
   ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: letters.map((letter) => Padding(
-        padding: EdgeInsets.symmetric(horizontal: spacing / 2),
-        child: SizedBox(
-          width: keyWidth,
-          height: keyHeight,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+      children: letters.map((letter) {
+        int colorCode = keyboardColors[letter] ?? 0;
+        Color bgColor = _getKeyboardColorFromCode(colorCode);
+        Color textColor = colorCode == 0 ? Colors.black : Colors.white;
+
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: spacing / 2),
+          child: SizedBox(
+            width: keyWidth,
+            height: keyHeight,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                backgroundColor: bgColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
-            ),
-            onPressed: () => onKeyPressed(letter),
-            child: Text(
-              letter,
-              style: TextStyle(
-                fontSize: keyWidth * 0.45,
-                fontWeight: FontWeight.bold,
+              onPressed: () => onKeyPressed(letter),
+              child: Text(
+                letter,
+                style: TextStyle(
+                  fontSize: keyWidth * 0.45,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
               ),
             ),
           ),
-        ),
-      )).toList(),
+        );
+      }).toList(),
     );
   }
 
@@ -280,30 +498,38 @@ class _WordleBodyState extends State<WordleBody> {
             ),
           ),
         ),
-        // Middle letters
-        ...middleLetters.map((letter) => Padding(
-          padding: EdgeInsets.symmetric(horizontal: spacing / 2),
-          child: SizedBox(
-            width: keyWidth,
-            height: keyHeight,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+        // Middle letters with colors
+        ...middleLetters.map((letter) {
+          int colorCode = keyboardColors[letter] ?? 0;
+          Color bgColor = _getKeyboardColorFromCode(colorCode);
+          Color textColor = colorCode == 0 ? Colors.black : Colors.white;
+
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: spacing / 2),
+            child: SizedBox(
+              width: keyWidth,
+              height: keyHeight,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  backgroundColor: bgColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
-              ),
-              onPressed: () => onKeyPressed(letter),
-              child: Text(
-                letter,
-                style: TextStyle(
-                  fontSize: keyWidth * 0.45,
-                  fontWeight: FontWeight.bold,
+                onPressed: () => onKeyPressed(letter),
+                child: Text(
+                  letter,
+                  style: TextStyle(
+                    fontSize: keyWidth * 0.45,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
               ),
             ),
-          ),
-        )),
+          );
+        }),
         // Backspace key
         Padding(
           padding: EdgeInsets.symmetric(horizontal: spacing / 2),
