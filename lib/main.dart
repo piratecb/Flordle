@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
-import 'package:projeto_prog_mobile_wordle/screens/teste_firebase_simples.dart';
-import 'package:projeto_prog_mobile_wordle/screens/admin_painel.dart';
 import 'package:projeto_prog_mobile_wordle/data/word_list.dart';
 import 'package:projeto_prog_mobile_wordle/screens/login_screen.dart';
 import 'package:projeto_prog_mobile_wordle/screens/stats_screen.dart';
@@ -34,8 +32,6 @@ class _wordleState extends State<wordle> {
       initialRoute: '/',
       routes: {
         '/': (context) => HomeScreen(),
-        '/teste': (context) => const TesteFirebaseSimples(),
-        '/admin': (context) => const AdminPainel(),
         '/login': (context) => LoginScreen(),
         '/stats': (context) => StatsScreen(),
       },
@@ -45,35 +41,78 @@ class _wordleState extends State<wordle> {
 
 // Tela inicial do Wordle
 class HomeScreen extends StatelessWidget {
+  final AuthService _authService = AuthService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[850],
+      backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        title: Text('Wordle'),
-        backgroundColor: Colors.grey[600],
+        elevation: 0,
+        centerTitle: true,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'F',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.green[400],
+              ),
+            ),
+            Text(
+              'L',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.amber[600],
+              ),
+            ),
+            const Text(
+              'ORDLE',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.grey[850],
+        leading: IconButton(
+          icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
+          tooltip: 'Estatísticas',
+          onPressed: () {
+            Navigator.pushNamed(context, '/stats');
+          },
+        ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.bar_chart),
-            tooltip: 'Estatísticas',
-            onPressed: () {
-              Navigator.pushNamed(context, '/stats');
+          StreamBuilder(
+            stream: _authService.authStateChanges,
+            builder: (context, snapshot) {
+              final user = _authService.currentUser;
+              final isLoggedIn = user != null && !user.isAnonymous;
+
+              return IconButton(
+                icon: Icon(
+                  isLoggedIn ? Icons.account_circle : Icons.account_circle_outlined,
+                  color: isLoggedIn ? Colors.green[400] : Colors.white,
+                  size: 28,
+                ),
+                tooltip: isLoggedIn ? 'Perfil' : 'Entrar',
+                onPressed: () {
+                  if (isLoggedIn) {
+                    Navigator.pushNamed(context, '/stats');
+                  } else {
+                    Navigator.pushNamed(context, '/login');
+                  }
+                },
+              );
             },
           ),
-          IconButton(
-            icon: Icon(Icons.cloud),
-            tooltip: 'Testar Firebase',
-            onPressed: () {
-              Navigator.pushNamed(context, '/teste');
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.admin_panel_settings),
-            tooltip: 'Painel Admin',
-            onPressed: () {
-              Navigator.pushNamed(context, '/admin');
-            },
-          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
@@ -311,42 +350,100 @@ class _WordleBodyState extends State<WordleBody> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text(won ? '🎉 Parabéns!' : '😢 Fim de jogo'),
+        backgroundColor: Colors.grey[850],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Column(
+          children: [
+            Text(
+              won ? '🎉' : '😢',
+              style: const TextStyle(fontSize: 48),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              won ? 'Parabéns!' : 'Fim de jogo',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               won
                   ? 'Acertaste a palavra em ${currentRow + 1} tentativa${currentRow > 0 ? 's' : ''}!'
-                  : 'A palavra era: $targetWord',
-              style: const TextStyle(fontSize: 18),
+                  : 'A palavra era:',
+              style: const TextStyle(fontSize: 16, color: Colors.white70),
+              textAlign: TextAlign.center,
             ),
+            if (!won) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.green[700],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  targetWord,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 4,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             if (_authService.currentUser != null)
-              Text(
-                'Estatísticas guardadas!',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  fontStyle: FontStyle.italic,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green[400], size: 16),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Estatísticas guardadas',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.green[400],
+                    ),
+                  ),
+                ],
               ),
           ],
         ),
+        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
+          TextButton.icon(
             onPressed: () {
               Navigator.of(context).pop();
               Navigator.pushNamed(context, '/stats');
             },
-            child: const Text('Ver Estatísticas'),
+            icon: const Icon(Icons.bar_chart_rounded),
+            label: const Text('Estatísticas'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white70,
+            ),
           ),
-          TextButton(
+          ElevatedButton.icon(
             onPressed: () {
               Navigator.of(context).pop();
               _resetGame();
             },
-            child: const Text('Jogar Novamente'),
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Jogar Novamente'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green[600],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
           ),
         ],
       ),
