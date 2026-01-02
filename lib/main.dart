@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:math';
+import 'dart:convert';
 import 'firebase_options.dart';
 import 'package:projeto_prog_mobile_wordle/data/word_list.dart';
 import 'package:projeto_prog_mobile_wordle/screens/login_screen.dart';
@@ -31,7 +34,7 @@ class _wordleState extends State<wordle> {
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => HomeScreen(),
+        '/': (context) => const HomeScreen(),
         '/login': (context) => LoginScreen(),
         '/stats': (context) => StatsScreen(),
       },
@@ -40,8 +43,28 @@ class _wordleState extends State<wordle> {
 }
 
 // Tela inicial do Wordle
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   final AuthService _authService = AuthService();
+  GameMode? _selectedMode;
+
+  void _selectMode(GameMode mode) {
+    setState(() {
+      _selectedMode = mode;
+    });
+  }
+
+  void _backToMenu() {
+    setState(() {
+      _selectedMode = null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +73,19 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         centerTitle: true,
+        leading: _selectedMode != null
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                tooltip: 'Voltar ao menu',
+                onPressed: _backToMenu,
+              )
+            : IconButton(
+                icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
+                tooltip: 'Estatísticas',
+                onPressed: () {
+                  Navigator.pushNamed(context, '/stats');
+                },
+              ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -81,14 +117,15 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         backgroundColor: Colors.grey[850],
-        leading: IconButton(
-          icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
-          tooltip: 'Estatísticas',
-          onPressed: () {
-            Navigator.pushNamed(context, '/stats');
-          },
-        ),
         actions: [
+          if (_selectedMode != null)
+            IconButton(
+              icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
+              tooltip: 'Estatísticas',
+              onPressed: () {
+                Navigator.pushNamed(context, '/stats');
+              },
+            ),
           StreamBuilder(
             stream: _authService.authStateChanges,
             builder: (context, snapshot) {
@@ -116,14 +153,129 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: SafeArea(
-        child: WordleBody(),
+        child: _selectedMode == null
+            ? _buildModeSelection()
+            : WordleBody(key: ValueKey(_selectedMode), gameMode: _selectedMode!),
+      ),
+    );
+  }
+
+  Widget _buildModeSelection() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Logo/Título
+            Text(
+              '🎯',
+              style: const TextStyle(fontSize: 64),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Escolhe o modo de jogo',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 48),
+
+            // Modo Diário
+            _buildModeCard(
+              icon: Icons.calendar_today_rounded,
+              title: 'Palavra do Dia',
+              subtitle: 'Uma palavra por dia para todos os jogadores',
+              color: Colors.green[600]!,
+              onTap: () => _selectMode(GameMode.daily),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Modo Ilimitado
+            _buildModeCard(
+              icon: Icons.all_inclusive_rounded,
+              title: 'Modo Ilimitado',
+              subtitle: 'Joga quantas vezes quiseres com palavras aleatórias',
+              color: Colors.amber[700]!,
+              onTap: () => _selectMode(GameMode.unlimited),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.grey[850],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withAlpha(128), width: 2),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withAlpha(51),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 32),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: color),
+          ],
+        ),
       ),
     );
   }
 }
 
+// Enum para modo de jogo
+enum GameMode { daily, unlimited }
+
 // Corpo do jogo Wordle
 class WordleBody extends StatefulWidget {
+  final GameMode gameMode;
+
+  const WordleBody({super.key, this.gameMode = GameMode.daily});
+
   @override
   State<WordleBody> createState() => _WordleBodyState();
 }
@@ -138,6 +290,10 @@ class _WordleBodyState extends State<WordleBody> {
 
   // Stats tracking
   bool _statsSaved = false;
+
+  // Daily game state
+  bool _dailyGameCompleted = false;
+  bool _isLoading = true;
 
   // Grid of letters - 6 rows x 5 columns
   List<List<String>> grid = List.generate(
@@ -170,17 +326,108 @@ class _WordleBodyState extends State<WordleBody> {
   @override
   void initState() {
     super.initState();
-    _selectDailyWord();
+    _initGame();
   }
 
-  // Select the daily word based on date
-  void _selectDailyWord() {
+  Future<void> _initGame() async {
+    _selectWord();
+
+    if (widget.gameMode == GameMode.daily) {
+      await _loadDailyGameState();
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  String _getTodayKey() {
     final now = DateTime.now();
-    // Use day of year as index to get a consistent daily word
-    final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays;
-    final wordIndex = dayOfYear % WordList.words.length;
-    targetWord = WordList.words[wordIndex];
-    print('🎯 Palavra do dia: $targetWord'); // Debug - remove in production
+    return 'daily_game_${now.year}_${now.month}_${now.day}';
+  }
+
+  Future<void> _loadDailyGameState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final todayKey = _getTodayKey();
+    final savedState = prefs.getString(todayKey);
+
+    if (savedState != null) {
+      final Map<String, dynamic> state = jsonDecode(savedState);
+
+      setState(() {
+        _dailyGameCompleted = state['completed'] ?? false;
+        won = state['won'] ?? false;
+        currentRow = state['currentRow'] ?? 0;
+
+        // Restaurar grid de letras
+        if (state['grid'] != null) {
+          List<dynamic> savedGrid = state['grid'];
+          for (int i = 0; i < savedGrid.length && i < maxAttempts; i++) {
+            List<dynamic> row = savedGrid[i];
+            for (int j = 0; j < row.length && j < wordLength; j++) {
+              grid[i][j] = row[j].toString();
+            }
+          }
+        }
+
+        // Restaurar cores do grid
+        if (state['colorGrid'] != null) {
+          List<dynamic> savedColorGrid = state['colorGrid'];
+          for (int i = 0; i < savedColorGrid.length && i < maxAttempts; i++) {
+            List<dynamic> row = savedColorGrid[i];
+            for (int j = 0; j < row.length && j < wordLength; j++) {
+              colorGrid[i][j] = row[j] as int;
+            }
+          }
+        }
+
+        // Restaurar cores do teclado
+        if (state['keyboardColors'] != null) {
+          Map<String, dynamic> savedKeyboard = state['keyboardColors'];
+          savedKeyboard.forEach((key, value) {
+            keyboardColors[key] = value as int;
+          });
+        }
+
+        if (_dailyGameCompleted) {
+          gameOver = true;
+          _statsSaved = true; // Já foi salvo anteriormente
+        }
+      });
+    }
+  }
+
+  Future<void> _saveDailyGameState() async {
+    if (widget.gameMode != GameMode.daily) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final todayKey = _getTodayKey();
+
+    final state = {
+      'completed': gameOver,
+      'won': won,
+      'currentRow': currentRow,
+      'grid': grid,
+      'colorGrid': colorGrid,
+      'keyboardColors': keyboardColors,
+    };
+
+    await prefs.setString(todayKey, jsonEncode(state));
+  }
+
+  // Select the word based on game mode
+  void _selectWord() {
+    if (widget.gameMode == GameMode.daily) {
+      // Modo diário: usa a palavra do dia
+      targetWord = WordList.getWordForDate(DateTime.now());
+      print('🎯 Palavra do dia: $targetWord');
+    } else {
+      // Modo ilimitado: palavra aleatória
+      final random = Random();
+      final wordIndex = random.nextInt(WordList.words.length);
+      targetWord = WordList.words[wordIndex];
+      print('🎲 Palavra aleatória: $targetWord');
+    }
   }
 
   // Add a letter to the current position
@@ -344,6 +591,7 @@ class _WordleBodyState extends State<WordleBody> {
     if (!_statsSaved) {
       _statsSaved = true;
       _saveGameStats(won);
+      _saveDailyGameState(); // Salva estado do jogo diário
     }
 
     showDialog(
@@ -430,21 +678,37 @@ class _WordleBodyState extends State<WordleBody> {
               foregroundColor: Colors.white70,
             ),
           ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _resetGame();
-            },
-            icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Jogar Novamente'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green[600],
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          if (widget.gameMode == GameMode.unlimited)
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _resetGame();
+              },
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Nova Palavra'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber[700],
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            )
+          else
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              icon: const Icon(Icons.check_rounded),
+              label: const Text('Fechar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green[600],
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -482,14 +746,47 @@ class _WordleBodyState extends State<WordleBody> {
       won = false;
       keyboardColors = {};
       _statsSaved = false;
-      _selectDailyWord();
+      _selectWord();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
     return Column(
       children: [
+        // Banner para jogo diário completado
+        if (widget.gameMode == GameMode.daily && _dailyGameCompleted)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            color: won ? Colors.green[700] : Colors.grey[700],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  won ? Icons.emoji_events : Icons.calendar_today,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  won
+                      ? 'Acertaste em ${currentRow} tentativa${currentRow > 1 ? 's' : ''}! Volta amanhã.'
+                      : 'Já jogaste hoje. Volta amanhã!',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
         // Game Grid - Responsive letter boxes
         Padding(
           padding: const EdgeInsets.all(10.0),
@@ -519,9 +816,10 @@ class _WordleBodyState extends State<WordleBody> {
           ),
         ),
         Expanded(child: Container()),
-        // Responsive Keyboard
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+        // Responsive Keyboard (escondido se jogo diário completado)
+        if (!(widget.gameMode == GameMode.daily && _dailyGameCompleted))
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
           child: LayoutBuilder(
             builder: (context, constraints) {
               // Calculate key sizes based on available width
