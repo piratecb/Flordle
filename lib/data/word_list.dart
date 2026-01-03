@@ -295,7 +295,7 @@ class WordList {
     // Additional words - E
     'EBANO', 'EDEMA', 'EDITA', 'EDITO', 'EFEBS', 'EGUAS', 'EIXOS', 'ELEGE',
     'ELEVA', 'ELFOS', 'EMANA', 'EMITE', 'EMITO', 'ENCHE', 'ENCHO', 'ENEMA',
-    'ENFIE', 'ENFIM', 'ENFIO', 'ENGANO', 'ENTES', 'ENTOA', 'ENTRA', 'ENTRE',
+    'ENFIE', 'ENFIM', 'ENFIO', 'ENOJO', 'ENTES', 'ENTOA', 'ENTRA', 'ENTRE',
     'ENTRO', 'ENVIE', 'ENVIO', 'ERICA', 'ERIJO', 'ERRAM', 'ERRAS', 'ERREM',
     'ERRES', 'ERROS', 'ERROU', 'ESCOL', 'ESCOR', 'ESPIA', 'ESPIE', 'ESPIO',
     'ESQUI', 'ESSES', 'ESTAS', 'ESTES', 'ESTIA', 'ESTIO', 'ESTOL', 'ESTOU',

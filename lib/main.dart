@@ -80,11 +80,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 tooltip: 'Voltar ao menu',
                 onPressed: _backToMenu,
               )
-            : IconButton(
-                icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
-                tooltip: 'Estatísticas',
-                onPressed: () {
-                  Navigator.pushNamed(context, '/stats');
+            : StreamBuilder(
+                stream: _authService.authStateChanges,
+                builder: (context, snapshot) {
+                  final user = _authService.currentUser;
+                  final isLoggedIn = user != null && !user.isAnonymous;
+                  if (isLoggedIn) {
+                    return const SizedBox.shrink();
+                  }
+                  return IconButton(
+                    icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
+                    tooltip: 'Estatísticas',
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/stats');
+                    },
+                  );
                 },
               ),
         title: Row(
@@ -119,19 +129,38 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         backgroundColor: Colors.grey[850],
         actions: [
-          if (_selectedMode != null)
-            IconButton(
-              icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
-              tooltip: 'Estatísticas',
-              onPressed: () {
-                Navigator.pushNamed(context, '/stats');
-              },
-            ),
           StreamBuilder(
             stream: _authService.authStateChanges,
             builder: (context, snapshot) {
               final user = _authService.currentUser;
               final isLoggedIn = user != null && !user.isAnonymous;
+
+              // Show stats button only when in game mode and not logged in
+              if (_selectedMode != null && !isLoggedIn) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
+                      tooltip: 'Estatísticas',
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/stats');
+                      },
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.account_circle_outlined,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      tooltip: 'Entrar',
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/login');
+                      },
+                    ),
+                  ],
+                );
+              }
 
               return IconButton(
                 icon: Icon(
