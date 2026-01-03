@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#6AAA64"/>
+
+  <!-- Letter tiles representing Wordle -->
+  <rect x="80" y="170" width="70" height="70" rx="8" fill="#538D4E"/>
+  <rect x="160" y="170" width="70" height="70" rx="8" fill="#B59F3B"/>
+  <rect x="240" y="170" width="70" height="70" rx="8" fill="#538D4E"/>
+  <rect x="320" y="170" width="70" height="70" rx="8" fill="#538D4E"/>
+  <rect x="400" y="170" width="70" height="70" rx="8" fill="#B59F3B"/>
+
+  <!-- Letter F -->
+  <text x="115" y="225" font-family="Arial, sans-serif" font-size="50" font-weight="bold" fill="white" text-anchor="middle">F</text>
+
+  <!-- Flower symbol on top -->
+  <circle cx="256" cy="90" r="25" fill="#FFD700"/>
+  <ellipse cx="256" cy="55" rx="15" ry="25" fill="#FF69B4"/>
+  <ellipse cx="291" cy="75" rx="15" ry="25" fill="#FF69B4" transform="rotate(72 256 90)"/>
+  <ellipse cx="278" cy="110" rx="15" ry="25" fill="#FF69B4" transform="rotate(144 256 90)"/>
+  <ellipse cx="234" cy="110" rx="15" ry="25" fill="#FF69B4" transform="rotate(216 256 90)"/>
+  <ellipse cx="221" cy="75" rx="15" ry="25" fill="#FF69B4" transform="rotate(288 256 90)"/>
+  <circle cx="256" cy="90" r="18" fill="#FFD700"/>
+
+  <!-- Bottom row empty tiles -->
+  <rect x="80" y="270" width="70" height="70" rx="8" fill="#3A3A3C" stroke="#565656" stroke-width="2"/>
+  <rect x="160" y="270" width="70" height="70" rx="8" fill="#3A3A3C" stroke="#565656" stroke-width="2"/>
+  <rect x="240" y="270" width="70" height="70" rx="8" fill="#3A3A3C" stroke="#565656" stroke-width="2"/>
+  <rect x="320" y="270" width="70" height="70" rx="8" fill="#3A3A3C" stroke="#565656" stroke-width="2"/>
+  <rect x="400" y="270" width="70" height="70" rx="8" fill="#3A3A3C" stroke="#565656" stroke-width="2"/>
+
+  <!-- Third row -->
+  <rect x="80" y="370" width="70" height="70" rx="8" fill="#3A3A3C" stroke="#565656" stroke-width="2"/>
+  <rect x="160" y="370" width="70" height="70" rx="8" fill="#3A3A3C" stroke="#565656" stroke-width="2"/>
+  <rect x="240" y="370" width="70" height="70" rx="8" fill="#3A3A3C" stroke="#565656" stroke-width="2"/>
+  <rect x="320" y="370" width="70" height="70" rx="8" fill="#3A3A3C" stroke="#565656" stroke-width="2"/>
+  <rect x="400" y="370" width="70" height="70" rx="8" fill="#3A3A3C" stroke="#565656" stroke-width="2"/>
+</svg>
+
