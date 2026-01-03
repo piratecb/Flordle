@@ -80,23 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 tooltip: 'Voltar ao menu',
                 onPressed: _backToMenu,
               )
-            : StreamBuilder(
-                stream: _authService.authStateChanges,
-                builder: (context, snapshot) {
-                  final user = _authService.currentUser;
-                  final isLoggedIn = user != null && !user.isAnonymous;
-                  if (isLoggedIn) {
-                    return const SizedBox.shrink();
-                  }
-                  return IconButton(
-                    icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
-                    tooltip: 'Estatísticas',
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/stats');
-                    },
-                  );
-                },
-              ),
+            : null,
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -198,9 +182,10 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Logo/Título
-            Text(
-              '🎯',
-              style: const TextStyle(fontSize: 64),
+            Icon(
+              Icons.adjust_rounded,
+              size: 64,
+              color: Colors.green[400],
             ),
             const SizedBox(height: 16),
             const Text(
@@ -884,9 +869,10 @@ class _WordleBodyState extends State<WordleBody> {
         ),
         title: Column(
           children: [
-            Text(
-              won ? '🎉' : '😢',
-              style: const TextStyle(fontSize: 48),
+            Icon(
+              won ? Icons.celebration_rounded : Icons.sentiment_dissatisfied_rounded,
+              size: 48,
+              color: won ? Colors.amber[400] : Colors.grey[400],
             ),
             const SizedBox(height: 8),
             Text(
