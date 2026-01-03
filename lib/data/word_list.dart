@@ -6,6 +6,8 @@
 /// - Palavras comuns em português de Portugal
 /// - Nenhuma palavra repetida
 
+import 'valid_guesses.dart';
+
 class WordList {
   /// Lista de 365+ palavras de 5 letras (sem acentos)
   static const List<String> words = [
@@ -13,7 +15,7 @@ class WordList {
     'ABRIR', 'ACASO', 'ACIMA', 'ACTOR', 'ADEUS', 'ADVIR', 'AFETO', 'AGORA',
     'AINDA', 'AJUDA', 'ALUNO', 'AMIGO', 'AMPLO', 'ANDAR', 'ANIMO', 'ANTES',
     'APOIO', 'AREIA', 'ARGOS', 'ATUAL', 'AUDIO', 'AUTOR', 'AVISO', 'AZEDO',
-    'ALTAR', 'AMBOS', 'ANZOL', 'ABRIL', 'ACENO', 'ALGAR', 'ALEGR', 'AROMA',
+    'ALTAR', 'AMBOS', 'ANZOL', 'ABRIL', 'ACENO', 'ALGAR', 'ALEGA', 'AROMA',
     'ASILO', 'ATLAS', 'ATRIZ', 'AVIAO', 'ARMAS', 'AULAS', 'ANJOS', 'ASSIM',
 
     // B
@@ -78,7 +80,7 @@ class WordList {
     // J
     'JOGOS', 'JOIAS', 'JORDO', 'JOVEM', 'JULHO', 'JUNHO', 'JUNTA', 'JURAR',
     'JUROS', 'JUSTO', 'JACTO', 'JARRA', 'JATOS', 'JEITO', 'JESUS', 'JOGAR',
-    'JORGA', 'JORNA', 'JUDEU', 'JUGOS', 'JUNCO', 'JUSTA',
+    'JORRA', 'JORNA', 'JUDEU', 'JUGOS', 'JUNCO', 'JUSTA',
 
     // L
     'LADOS', 'LAGO', 'LAPIS', 'LARGO', 'LAZER', 'LEGAL', 'LENTE', 'LETRA',
@@ -96,7 +98,7 @@ class WordList {
     'METAL', 'METER', 'MINHA', 'MOEDA', 'MOLDE', 'MONTE', 'MORAL', 'MORAR',
     'MORTA', 'MOTOR', 'MUDAR', 'MUITO', 'MUNDO', 'MUSEU', 'MUTUO', 'MACAR',
     'MAFIA', 'MAGIA', 'MAGOA', 'MALAS', 'MANCA', 'MANGA', 'MAPAS', 'MARES',
-    'MARTE', 'MATIZ', 'MATOS', 'MAXIM', 'MAZAS', 'MEDIA', 'MEDOS', 'MEIOS',
+    'MARTE', 'MATIZ', 'MATOS', 'MAURO', 'MAZAS', 'MEDIA', 'MEDOS', 'MEIOS',
     'MELAO', 'MESAS', 'MESES', 'METRO', 'MEXER', 'MILHO', 'MIMOS', 'MINAS',
     'MINHA', 'MINTO', 'MIRAR', 'MISSA', 'MISTO', 'MITOS', 'MITRA', 'MIXAR',
     'MOCAS', 'MODOS', 'MOFAR', 'MOITA', 'MOLAR', 'MOLHO', 'MONGE', 'MORRO',
@@ -111,7 +113,7 @@ class WordList {
 
     // O
     'OBVIO', 'OCUPA', 'ODIAR', 'OLHAR', 'OPACO', 'OPTAR', 'ORDEM', 'ORGAO',
-    'OUTRA', 'OUTRO', 'OUVIR', 'OBESA', 'OBRAS', 'OCASO', 'OCIOS', 'OCULTO',
+    'OUTRA', 'OUTRO', 'OUVIR', 'OBESA', 'OBRAS', 'OCASO', 'OCIOS', 'OCULO',
     'OFEGA', 'OGIVA', 'OLEOS', 'OLHOS', 'ONDAS', 'ONTEM', 'ONZAS', 'OPERA',
     'OPNIO', 'ORAAO', 'ORBES', 'ORFAO', 'ORGIA', 'OSSOS', 'OSTRA', 'OUSAS',
     'OUROS', 'OUVEM', 'OVAIS', 'OVINO', 'OVNIS', 'OXIDO',
@@ -183,7 +185,7 @@ class WordList {
     'TERGO', 'TERMA', 'TERMO', 'TERNA', 'TEROS', 'TERSA', 'TERSO', 'TESAO',
     'TESAS', 'TESOS', 'TESTA', 'TETRA', 'TIARA', 'TIBIO', 'TIGRE', 'TILES',
     'TIMBA', 'TIMES', 'TIMOL', 'TINAS', 'TINGE', 'TINIR', 'TINTO', 'TIPAS',
-    'TIPIC', 'TIQUE', 'TIRAS', 'TITAS', 'TIUBA', 'TIVER', 'TOADA', 'TOBAS',
+'TIPOS', 'TIQUE', 'TIRAS', 'TITAS', 'TITAN', 'TIVER', 'TOADA', 'TOBAS',
     'TOCAM', 'TOCAS', 'TOCHA', 'TODOS', 'TOGAS', 'TOLAS', 'TOLOS', 'TOMAM',
     'TOMAR', 'TOMAS', 'TOMBA', 'TOMBO', 'TOMOS', 'TONAS', 'TONER', 'TONES',
     'TONIA', 'TONIS', 'TONOS', 'TONUS', 'TOPAM', 'TOPAR', 'TOPAS', 'TOPES',
@@ -191,8 +193,8 @@ class WordList {
     'TORSO', 'TORTA', 'TORTO', 'TOSAR', 'TOSCA', 'TOSCO', 'TOSSE', 'TOUCA',
     'TOURA', 'TOURO', 'TRACA', 'TRAGO', 'TRAJE', 'TRAMA', 'TRANA', 'TRANS',
     'TRAPO', 'TRATA', 'TRAVE', 'TRAZE', 'TRECO', 'TREME', 'TRENO', 'TREPA',
-    'TREZE', 'TRIBO', 'TRIGA', 'TRIGO', 'TRILH', 'TRINA', 'TRIOS', 'TRIPA',
-    'TROCA', 'TROCO', 'TRONO', 'TROPA', 'TROTE', 'TROVA', 'TRUFA', 'TRUQU',
+    'TREZE', 'TRIBO', 'TRIGA', 'TRIGO', 'TRINA', 'TRIOS', 'TRIPA',
+    'TROCA', 'TROCO', 'TRONO', 'TROPA', 'TROTE', 'TROVA', 'TRUFA', 'TUBAS',
     'TUBAS', 'TUBOS', 'TUCAS', 'TUDOS', 'TUFAS', 'TUFOS', 'TUIAS', 'TULAR',
     'TULES', 'TUMOR', 'TUNAS', 'TUNDA', 'TUNEL', 'TUPIS', 'TURBA', 'TURCA',
     'TURCO', 'TURFA', 'TURVO', 'TUSSA', 'TUTOR', 'TUTUS',
@@ -210,16 +212,16 @@ class WordList {
     'VIRAR', 'VISAR', 'VISTA', 'VISTO', 'VITAL', 'VIUVA', 'VIVER', 'VIVOS',
     'VIZIR', 'VOCES', 'VOLTA', 'VOTAR', 'VOTOS', 'VULGO', 'VULTO', 'VACUO',
     'VADES', 'VAGAO', 'VAGAS', 'VAGOS', 'VAIAS', 'VALAS', 'VALES', 'VALHA',
-    'VAMOS', 'VANFS', 'VARAL', 'VARAS', 'VARIA', 'VARIO', 'VASOS', 'VASTA',
+    'VAMOS', 'VANDA', 'VARAL', 'VARAS', 'VARIA', 'VARIO', 'VASOS', 'VASTA',
     'VASTO', 'VAZAR', 'VAZAS', 'VAZOS', 'VEDAR', 'VEDAS', 'VEEMS', 'VEGAS',
     'VEIOS', 'VELAS', 'VELOZ', 'VENAL', 'VENCE', 'VENDE', 'VENHA', 'VENIS',
     'VENOS', 'VERAS', 'VERBA', 'VERBO', 'VERGA', 'VERIA', 'VETAR', 'VEXAR',
     'VIADO', 'VIAJA', 'VIBRA', 'VICIO', 'VIDAS', 'VIDRO', 'VIELA', 'VIENA',
     'VIGAS', 'VIGIA', 'VILAS', 'VIMAX', 'VIMAS', 'VINAS', 'VINCO', 'VINDE',
-    'VINDS', 'VINIL', 'VINIR', 'VINTE', 'VIREM', 'VIRES', 'VIRGO', 'VIRIL',
+    'VINDE', 'VINIL', 'VINHA', 'VINTE', 'VIREM', 'VIRES', 'VIRGO', 'VIRIL',
     'VIRUS', 'VISAM', 'VISAO', 'VISAS', 'VISOR', 'VISSE', 'VIVAM', 'VIVAS',
     'VIVEI', 'VIVEM', 'VIVER', 'VIVES', 'VIVIA', 'VOADA', 'VOAIS', 'VOARA',
-    'VOCAL', 'VOCLA', 'VODCA', 'VOGAL', 'VOGAR', 'VOLEI', 'VOLTS', 'VOMIT',
+    'VOCAL', 'VOCES', 'VODCA', 'VOGAL', 'VOGAR', 'VOLEI', 'VOLTS', 'VORAZ',
     'VORAZ', 'VOSSO', 'VOTAM', 'VOTAR', 'VOTOS', 'VULVA',
 
     // Z
@@ -248,7 +250,7 @@ class WordList {
     'BARDO', 'BATEU', 'BATOM', 'BEATO', 'BEBAM', 'BEBAS', 'BEBEM', 'BEBES',
     'BEBIA', 'BEIRA', 'BELAS', 'BELOS', 'BEMES', 'BENTO', 'BERCO', 'BERNE',
     'BESTA', 'BETAO', 'BEXAR', 'BICAM', 'BICAR', 'BICAS', 'BIELO', 'BIFES',
-    'BIGUA', 'BILIS', 'BINGO', 'BIOMA', 'BISAO', 'BIVAC', 'BLEFE', 'BLOGS',
+    'BIGUA', 'BILIS', 'BINGO', 'BIOMA', 'BISAO', 'BISPO', 'BLEFE', 'BLOGS',
     'BOATO', 'BOBAS', 'BOBOS', 'BOCAL', 'BOCAO', 'BODAS', 'BODES', 'BOFIA',
     'BOLAS', 'BOLOR', 'BOMBO', 'BONDE', 'BONES', 'BONUS', 'BORDA', 'BOSAO',
     'BOTAR', 'BOTAS', 'BOTES', 'BOXES', 'BRACU', 'BRAMO', 'BROAS', 'BROCA',
@@ -257,7 +259,7 @@ class WordList {
 
     // Additional words - C
     'CABOS', 'CACAU', 'CACOS', 'CADEA', 'CAFES', 'CAIAS', 'CAIDA', 'CAIDO',
-    'CAIRN', 'CAJAS', 'CALAS', 'CALCA', 'CALHA', 'CALOS', 'CAMEO', 'CANAS',
+    'CAIRO', 'CAIXA', 'CALAS', 'CALCA', 'CALHA', 'CALOS', 'CAMEO', 'CANAS',
     'CAPAS', 'CAPAZ', 'CAPIM', 'CAPTA', 'CARAS', 'CARGA', 'CASCO', 'CASEI',
     'CASEM', 'CASES', 'CASPA', 'CASTA', 'CATAS', 'CAVAR', 'CAVAS', 'CAXAS',
     'CEBAS', 'CEDEM', 'CEDES', 'CEDIA', 'CEDRO', 'CEGAS', 'CEGOS', 'CELDA',
@@ -295,7 +297,7 @@ class WordList {
     // Additional words - E
     'EBANO', 'EDEMA', 'EDITA', 'EDITO', 'EFEBS', 'EGUAS', 'EIXOS', 'ELEGE',
     'ELEVA', 'ELFOS', 'EMANA', 'EMITE', 'EMITO', 'ENCHE', 'ENCHO', 'ENEMA',
-    'ENFIE', 'ENFIM', 'ENFIO', 'ENGANO', 'ENTES', 'ENTOA', 'ENTRA', 'ENTRE',
+    'ENFIE', 'ENFIM', 'ENFIO', 'ENOJO', 'ENTES', 'ENTOA', 'ENTRA', 'ENTRE',
     'ENTRO', 'ENVIE', 'ENVIO', 'ERICA', 'ERIJO', 'ERRAM', 'ERRAS', 'ERREM',
     'ERRES', 'ERROS', 'ERROU', 'ESCOL', 'ESCOR', 'ESPIA', 'ESPIE', 'ESPIO',
     'ESQUI', 'ESSES', 'ESTAS', 'ESTES', 'ESTIA', 'ESTIO', 'ESTOL', 'ESTOU',
@@ -303,7 +305,7 @@ class WordList {
     'EXAME', 'EXIBE', 'EXIBO', 'EXIGE', 'EXIJO', 'EXILE', 'EXILO', 'EXPOE',
 
     // Additional words - F
-    'FABAS', 'FABIS', 'FACAM', 'FACAS', 'FACES', 'FACHO', 'FACIL', 'FADAS',
+    'FAVAS', 'FACAM', 'FACAS', 'FACES', 'FACHO', 'FACIL', 'FADAS',
     'FADOS', 'FAGOS', 'FAIAS', 'FAIDA', 'FALAI', 'FALAM', 'FALAS', 'FALEM',
     'FALES', 'FALIR', 'FALOU', 'FALTA', 'FALTE', 'FALTO', 'FAMAS', 'FAMES',
     'FANGO', 'FARAO', 'FARAS', 'FARAU', 'FARCO', 'FARDA', 'FARDO', 'FARDU',
@@ -371,8 +373,11 @@ class WordList {
   static int get totalWords => words.length;
 
   /// Verifica se uma palavra existe na lista (para validação de palpites)
+  /// Verifica tanto na lista de palavras-alvo como na lista de palpites válidos
   static bool isValidWord(String word) {
-    return words.contains(word.toUpperCase());
+    final upperWord = word.toUpperCase();
+    return words.contains(upperWord) ||
+           ValidGuesses.additionalWords.contains(upperWord);
   }
 
   /// Preview das próximas N palavras (para debug/admin)

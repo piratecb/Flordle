@@ -35,13 +35,13 @@ class _TesteFirebaseSimplesState extends State<TesteFirebaseSimples> {
 
       if (doc.exists) {
         setState(() {
-          _status = '✅ Conexão Firebase OK!\n\nDados: ${doc.data()}';
+          _status = '[OK] Conexão Firebase OK!\n\nDados: ${doc.data()}';
           _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        _status = '❌ Erro na conexão:\n$e';
+        _status = '[ERRO] Erro na conexão:\n$e';
         _isLoading = false;
       });
     }

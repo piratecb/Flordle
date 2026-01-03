@@ -120,11 +120,11 @@ lib/
 
 ---
 
-## 📱 Screenshots
+## 📱 Screenshot
 
-| Menu Inicial | Jogo | Estatísticas |
-|:------------:|:----:|:------------:|
-| 🎮 | 🎯 | 📊 |
+<p align="center">
+  <img src="assets/screenshot_game.png" alt="Flordle - Screenshot do Jogo" width="300"/>
+</p>
 
 ---
 

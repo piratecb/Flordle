@@ -64,25 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _handleAnonymousLogin() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    AuthResult result = await _authService.signInAnonymously();
-
-    setState(() => _isLoading = false);
-
-    if (result.isSuccess) {
-      if (mounted) {
-        Navigator.of(context).pop(true);
-      }
-    } else {
-      setState(() => _errorMessage = result.errorMessage);
-    }
-  }
-
   Future<void> _handleResetPassword() async {
     String email = _emailController.text.trim();
 
@@ -329,49 +310,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ],
-            ),
-
-            const SizedBox(height: 32),
-
-            Row(
-              children: [
-                Expanded(child: Divider(color: Colors.grey[600])),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'ou',
-                    style: TextStyle(color: Colors.grey[400]),
-                  ),
-                ),
-                Expanded(child: Divider(color: Colors.grey[600])),
-              ],
-            ),
-
-            const SizedBox(height: 24),
-
-            OutlinedButton.icon(
-              onPressed: _isLoading ? null : _handleAnonymousLogin,
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Jogar sem conta'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.grey[300],
-                side: BorderSide(color: Colors.grey[600]!),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            Text(
-              'As estatísticas não serão guardadas',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[500],
-              ),
             ),
           ],
         ),
