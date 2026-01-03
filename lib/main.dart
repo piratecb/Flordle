@@ -214,6 +214,17 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.red[600]!,
               onTap: () => _selectMode(GameMode.rapidFire),
             ),
+
+            const SizedBox(height: 16),
+
+            // Modo Sorte
+            _buildModeCard(
+              icon: Icons.casino_rounded,
+              title: 'Modo Sorte',
+              subtitle: 'Obtém letras aleatórias e forma palavras com elas',
+              color: Colors.purple[600]!,
+              onTap: () => _selectMode(GameMode.luck),
+            ),
           ],
         ),
       ),
@@ -280,7 +291,7 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // Enum para modo de jogo
-enum GameMode { daily, unlimited, rapidFire }
+enum GameMode { daily, unlimited, rapidFire, luck }
 
 // Corpo do jogo Wordle
 class WordleBody extends StatefulWidget {
@@ -339,6 +350,12 @@ class _WordleBodyState extends State<WordleBody> {
   Timer? _rapidFireTimer;
   int _secondsRemaining = 0;
   static const int rapidFireTimeLimit = 20; // seconds per guess
+
+  // Luck mode state
+  Set<String> _luckAvailableLetters = {}; // Currently available letters
+  Set<String> _luckPermanentLetters = {}; // Letters that are permanently available (correct ones)
+  static const int luckLettersPerRoll = 10; // Number of letters per roll
+  bool _hasRolledThisRound = false; // Track if player has rolled this round
 
   @override
   void initState() {
@@ -524,9 +541,125 @@ class _WordleBodyState extends State<WordleBody> {
     super.dispose();
   }
 
+  // Luck mode methods
+  void _rollLuckLetters() {
+    if (_hasRolledThisRound && widget.gameMode == GameMode.luck) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Já obtiveste letras nesta ronda! Submete a tua tentativa primeiro.'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final random = Random();
+    const allLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    // Start with permanent letters (correct ones from previous rounds)
+    Set<String> newLetters = Set.from(_luckPermanentLetters);
+
+    // Always include ALL letters from the target word to guarantee it's solvable
+    for (String letter in targetWord.split('')) {
+      newLetters.add(letter);
+    }
+
+    // Fill the rest with random letters until we have luckLettersPerRoll total
+    while (newLetters.length < luckLettersPerRoll + _luckPermanentLetters.length) {
+      String randomLetter = allLetters[random.nextInt(allLetters.length)];
+      newLetters.add(randomLetter);
+    }
+
+    // Double-check that at least one valid word can be formed
+    // (should always be true since we include target word letters)
+    if (!_canFormAnyValidWord(newLetters)) {
+      // Fallback: add more letters from a random valid word
+      List<String> validWords = WordList.words.where((word) {
+        return _canFormWordWithLetters(word, newLetters);
+      }).toList();
+
+      if (validWords.isEmpty) {
+        // Pick a random word and add its letters
+        String randomWord = WordList.words[random.nextInt(WordList.words.length)];
+        for (String letter in randomWord.split('')) {
+          newLetters.add(letter);
+        }
+      }
+    }
+
+    setState(() {
+      _luckAvailableLetters = newLetters;
+      _hasRolledThisRound = true;
+    });
+  }
+
+  // Check if any valid word can be formed with the given letters
+  bool _canFormAnyValidWord(Set<String> availableLetters) {
+    for (String word in WordList.words) {
+      if (_canFormWordWithLetters(word, availableLetters)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Check if a specific word can be formed with the given letters
+  bool _canFormWordWithLetters(String word, Set<String> availableLetters) {
+    // Count available letters
+    Map<String, int> letterCount = {};
+    for (String letter in availableLetters) {
+      letterCount[letter] = (letterCount[letter] ?? 0) + 1;
+    }
+
+    // Check if word can be formed (considering letter frequency)
+    Map<String, int> neededCount = {};
+    for (String letter in word.split('')) {
+      neededCount[letter] = (neededCount[letter] ?? 0) + 1;
+    }
+
+    // For our simple case, just check if all unique letters exist
+    // (since we're using a Set, each letter appears once)
+    for (String letter in word.split('')) {
+      if (!availableLetters.contains(letter)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // Get list of valid words that can be formed with current available letters
+  List<String> _getFormableWords() {
+    Set<String> allAvailable = {..._luckAvailableLetters, ..._luckPermanentLetters};
+    return WordList.words.where((word) {
+      return _canFormWordWithLetters(word, allAvailable);
+    }).toList();
+  }
+
+  bool _isLetterAvailableInLuckMode(String letter) {
+    if (widget.gameMode != GameMode.luck) return true;
+    return _luckAvailableLetters.contains(letter) || _luckPermanentLetters.contains(letter);
+  }
+
+  void _updateLuckPermanentLetters() {
+    // Check the last submitted row for correct letters (green)
+    int lastRow = currentRow > 0 ? currentRow - 1 : 0;
+    for (int i = 0; i < wordLength; i++) {
+      if (colorGrid[lastRow][i] == 3) { // Green = correct
+        _luckPermanentLetters.add(grid[lastRow][i]);
+      }
+    }
+  }
+
   // Add a letter to the current position
   void _addLetter(String letter) {
     if (gameOver) return;
+
+    // Check if letter is available in Luck mode
+    if (widget.gameMode == GameMode.luck && !_isLetterAvailableInLuckMode(letter)) {
+      return; // Letter not available, do nothing
+    }
+
     if (currentRow < maxAttempts && currentCol < wordLength) {
       setState(() {
         grid[currentRow][currentCol] = letter;
@@ -549,6 +682,19 @@ class _WordleBodyState extends State<WordleBody> {
   // Submit the current guess (ENTER)
   void _submitGuess() {
     if (gameOver) return;
+
+    // In Luck mode, require rolling letters first
+    if (widget.gameMode == GameMode.luck && !_hasRolledThisRound && _luckAvailableLetters.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Clica em "Obter Letras" primeiro!'),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.purple,
+        ),
+      );
+      return;
+    }
+
     if (currentCol == wordLength) {
       // Get the current guess
       String guess = grid[currentRow].join();
@@ -567,6 +713,12 @@ class _WordleBodyState extends State<WordleBody> {
 
       // Validate and color the guess
       _validateGuess(guess);
+
+      // Update permanent letters for Luck mode (before checking win)
+      if (widget.gameMode == GameMode.luck) {
+        _updateLuckPermanentLetters();
+        _hasRolledThisRound = false; // Allow rolling again for next round
+      }
 
       // Check if won
       if (guess == targetWord) {
@@ -810,6 +962,22 @@ class _WordleBodyState extends State<WordleBody> {
                 ),
               ),
             )
+          else if (widget.gameMode == GameMode.luck)
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _resetGame();
+              },
+              icon: const Icon(Icons.casino_rounded),
+              label: const Text('Jogar Novamente'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.purple[600],
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            )
           else
             ElevatedButton.icon(
               onPressed: () {
@@ -862,6 +1030,12 @@ class _WordleBodyState extends State<WordleBody> {
       won = false;
       keyboardColors = {};
       _statsSaved = false;
+
+      // Reset Luck mode state
+      _luckAvailableLetters = {};
+      _luckPermanentLetters = {};
+      _hasRolledThisRound = false;
+
       _selectWord();
     });
   }
@@ -933,6 +1107,116 @@ class _WordleBodyState extends State<WordleBody> {
                     color: Colors.grey[400],
                   ),
                 ),
+              ],
+            ),
+          ),
+        // Luck mode UI - Get Letters button and available letters display
+        if (widget.gameMode == GameMode.luck && !gameOver)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: Column(
+              children: [
+                // Get Letters Button
+                ElevatedButton.icon(
+                  onPressed: _hasRolledThisRound ? null : _rollLuckLetters,
+                  icon: Icon(
+                    Icons.casino_rounded,
+                    color: _hasRolledThisRound ? Colors.grey[600] : Colors.white,
+                  ),
+                  label: Text(
+                    _hasRolledThisRound ? 'Já obtiveste letras' : 'Obter Letras',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _hasRolledThisRound ? Colors.grey[600] : Colors.white,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _hasRolledThisRound ? Colors.grey[800] : Colors.purple[600],
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Display available letters
+                if (_luckAvailableLetters.isNotEmpty || _luckPermanentLetters.isNotEmpty)
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      // Show permanent letters (green) first
+                      ..._luckPermanentLetters.map((letter) => Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.green[300]!, width: 2),
+                        ),
+                        child: Center(
+                          child: Text(
+                            letter,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      )),
+                      // Show temporary available letters (purple)
+                      ..._luckAvailableLetters
+                          .where((l) => !_luckPermanentLetters.contains(l))
+                          .map((letter) => Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: Colors.purple[600],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Center(
+                          child: Text(
+                            letter,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      )),
+                    ],
+                  )
+                else
+                  Text(
+                    'Clica em "Obter Letras" para começar!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[400],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                // Show hint about formable words
+                if (_luckAvailableLetters.isNotEmpty || _luckPermanentLetters.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Builder(
+                      builder: (context) {
+                        int formableCount = _getFormableWords().length;
+                        return Text(
+                          'Podes formar $formableCount palavra${formableCount != 1 ? 's' : ''} válida${formableCount != 1 ? 's' : ''}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: formableCount > 0 ? Colors.green[400] : Colors.red[400],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
               ],
             ),
           ),
@@ -1029,8 +1313,30 @@ class _WordleBodyState extends State<WordleBody> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: letters.map((letter) {
         int colorCode = keyboardColors[letter] ?? 0;
-        Color bgColor = _getKeyboardColorFromCode(colorCode);
-        Color textColor = colorCode == 0 ? Colors.black : Colors.white;
+        bool isAvailableInLuckMode = _isLetterAvailableInLuckMode(letter);
+        bool isLuckMode = widget.gameMode == GameMode.luck;
+
+        // In Luck mode, show unavailable letters as very dark/hidden
+        Color bgColor;
+        Color textColor;
+
+        if (isLuckMode && !isAvailableInLuckMode) {
+          // Unavailable letter in Luck mode - make it almost invisible
+          bgColor = Colors.grey[900]!;
+          textColor = Colors.grey[800]!;
+        } else if (isLuckMode && _luckPermanentLetters.contains(letter)) {
+          // Permanent letter (correct from previous rounds)
+          bgColor = Colors.green;
+          textColor = Colors.white;
+        } else if (isLuckMode && _luckAvailableLetters.contains(letter)) {
+          // Temporary available letter
+          bgColor = Colors.purple[600]!;
+          textColor = Colors.white;
+        } else {
+          // Normal mode or default
+          bgColor = _getKeyboardColorFromCode(colorCode);
+          textColor = colorCode == 0 ? Colors.black : Colors.white;
+        }
 
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: spacing / 2),
@@ -1045,7 +1351,7 @@ class _WordleBodyState extends State<WordleBody> {
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
-              onPressed: () => onKeyPressed(letter),
+              onPressed: (isLuckMode && !isAvailableInLuckMode) ? null : () => onKeyPressed(letter),
               child: Text(
                 letter,
                 style: TextStyle(
@@ -1102,8 +1408,30 @@ class _WordleBodyState extends State<WordleBody> {
         // Middle letters with colors
         ...middleLetters.map((letter) {
           int colorCode = keyboardColors[letter] ?? 0;
-          Color bgColor = _getKeyboardColorFromCode(colorCode);
-          Color textColor = colorCode == 0 ? Colors.black : Colors.white;
+          bool isAvailableInLuckMode = _isLetterAvailableInLuckMode(letter);
+          bool isLuckMode = widget.gameMode == GameMode.luck;
+
+          // In Luck mode, show unavailable letters as very dark/hidden
+          Color bgColor;
+          Color textColor;
+
+          if (isLuckMode && !isAvailableInLuckMode) {
+            // Unavailable letter in Luck mode
+            bgColor = Colors.grey[900]!;
+            textColor = Colors.grey[800]!;
+          } else if (isLuckMode && _luckPermanentLetters.contains(letter)) {
+            // Permanent letter (correct from previous rounds)
+            bgColor = Colors.green;
+            textColor = Colors.white;
+          } else if (isLuckMode && _luckAvailableLetters.contains(letter)) {
+            // Temporary available letter
+            bgColor = Colors.purple[600]!;
+            textColor = Colors.white;
+          } else {
+            // Normal mode or default
+            bgColor = _getKeyboardColorFromCode(colorCode);
+            textColor = colorCode == 0 ? Colors.black : Colors.white;
+          }
 
           return Padding(
             padding: EdgeInsets.symmetric(horizontal: spacing / 2),
@@ -1118,7 +1446,7 @@ class _WordleBodyState extends State<WordleBody> {
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
-                onPressed: () => onKeyPressed(letter),
+                onPressed: (isLuckMode && !isAvailableInLuckMode) ? null : () => onKeyPressed(letter),
                 child: Text(
                   letter,
                   style: TextStyle(
