@@ -1096,29 +1096,29 @@ class _WordleBodyState extends State<WordleBody> {
         if (widget.gameMode == GameMode.rapidFire && !gameOver)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   Icons.timer_rounded,
                   color: _secondsRemaining <= 5 ? Colors.red[400] : Colors.white,
-                  size: 24,
+                  size: 20,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Text(
                   '$_secondsRemaining',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: _secondsRemaining <= 5 ? Colors.red[400] : Colors.white,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Text(
-                  'segundos',
+                  's',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 12,
                     color: Colors.grey[400],
                   ),
                 ),
@@ -1129,7 +1129,7 @@ class _WordleBodyState extends State<WordleBody> {
         if (widget.gameMode == GameMode.luck && !gameOver)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
             child: Column(
               children: [
                 // Get Letters Button
@@ -1138,44 +1138,46 @@ class _WordleBodyState extends State<WordleBody> {
                   icon: Icon(
                     Icons.casino_rounded,
                     color: _hasRolledThisRound ? Colors.grey[600] : Colors.white,
+                    size: 18,
                   ),
                   label: Text(
                     _hasRolledThisRound ? 'Já obtiveste letras' : 'Obter Letras',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
+                      fontSize: 13,
                       color: _hasRolledThisRound ? Colors.grey[600] : Colors.white,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _hasRolledThisRound ? Colors.grey[800] : Colors.purple[600],
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 // Display available letters
                 if (_luckAvailableLetters.isNotEmpty || _luckPermanentLetters.isNotEmpty)
                   Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
+                    spacing: 4,
+                    runSpacing: 4,
                     alignment: WrapAlignment.center,
                     children: [
                       // Show permanent letters (green) first
                       ..._luckPermanentLetters.map((letter) => Container(
-                        width: 36,
-                        height: 36,
+                        width: 28,
+                        height: 28,
                         decoration: BoxDecoration(
                           color: Colors.green,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.green[300]!, width: 2),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.green[300]!, width: 1),
                         ),
                         child: Center(
                           child: Text(
                             letter,
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -1186,17 +1188,17 @@ class _WordleBodyState extends State<WordleBody> {
                       ..._luckAvailableLetters
                           .where((l) => !_luckPermanentLetters.contains(l))
                           .map((letter) => Container(
-                        width: 36,
-                        height: 36,
+                        width: 28,
+                        height: 28,
                         decoration: BoxDecoration(
                           color: Colors.purple[600],
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Center(
                           child: Text(
                             letter,
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -1209,7 +1211,7 @@ class _WordleBodyState extends State<WordleBody> {
                   Text(
                     'Clica em "Obter Letras" para começar!',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       color: Colors.grey[400],
                       fontStyle: FontStyle.italic,
                     ),
@@ -1217,14 +1219,14 @@ class _WordleBodyState extends State<WordleBody> {
                 // Show hint about formable words
                 if (_luckAvailableLetters.isNotEmpty || _luckPermanentLetters.isNotEmpty)
                   Padding(
-                    padding: const EdgeInsets.only(top: 8),
+                    padding: const EdgeInsets.only(top: 4),
                     child: Builder(
                       builder: (context) {
                         int formableCount = _getFormableWords().length;
                         return Text(
                           'Podes formar $formableCount palavra${formableCount != 1 ? 's' : ''} válida${formableCount != 1 ? 's' : ''}',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: formableCount > 0 ? Colors.green[400] : Colors.red[400],
                             fontStyle: FontStyle.italic,
                           ),
@@ -1237,14 +1239,14 @@ class _WordleBodyState extends State<WordleBody> {
           ),
         // Game Grid - Responsive letter boxes
         Padding(
-          padding: const EdgeInsets.all(10.0),
+          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
           child: LayoutBuilder(
             builder: (context, constraints) {
               // Calculate box size based on available width
               // 5 boxes with margins (6px each side = 12px per box)
               final double maxBoxWidth = (constraints.maxWidth - (5 * 6)) / 5;
-              // Limit the size for larger screens
-              final double boxSize = maxBoxWidth.clamp(40.0, 62.0);
+              // Limit the size for larger screens - reduced for better fit
+              final double boxSize = maxBoxWidth.clamp(36.0, 56.0);
 
               return Column(
                 children: List.generate(maxAttempts, (rowIndex) {
@@ -1263,51 +1265,61 @@ class _WordleBodyState extends State<WordleBody> {
             },
           ),
         ),
-        Expanded(child: Container()),
+        const Spacer(),
         // Responsive Keyboard (escondido se jogo diário completado)
         if (!(widget.gameMode == GameMode.daily && _dailyGameCompleted))
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // Calculate key sizes based on available width
+              // Calculate key sizes based on available width with max limit
               final double keySpacing = 4.0;
               final int keysInTopRow = 10;
               final double availableWidth = constraints.maxWidth - (keySpacing * (keysInTopRow + 1));
-              final double keyWidth = availableWidth / keysInTopRow;
+              // Limit max key width for larger screens (PC)
+              final double calculatedKeyWidth = availableWidth / keysInTopRow;
+              final double keyWidth = calculatedKeyWidth.clamp(26.0, 42.0);
               final double keyHeight = keyWidth * 1.3;
 
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Row 1: Q W E R T Y U I O P
-                  _buildKeyboardRow(
-                    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-                    keyWidth,
-                    keyHeight,
-                    keySpacing,
-                    _addLetter,
+              // Center the keyboard by calculating total width
+              final double totalKeyboardWidth = (keyWidth * keysInTopRow) + (keySpacing * (keysInTopRow + 1));
+
+              return Center(
+                child: SizedBox(
+                  width: totalKeyboardWidth,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Row 1: Q W E R T Y U I O P
+                      _buildKeyboardRow(
+                        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+                        keyWidth,
+                        keyHeight,
+                        keySpacing,
+                        _addLetter,
+                      ),
+                      SizedBox(height: keySpacing),
+                      // Row 2: A S D F G H J K L
+                      _buildKeyboardRow(
+                        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+                        keyWidth,
+                        keyHeight,
+                        keySpacing,
+                        _addLetter,
+                      ),
+                      SizedBox(height: keySpacing),
+                      // Row 3: ENTER Z X C V B N M ⌫
+                      _buildBottomKeyboardRow(
+                        keyWidth,
+                        keyHeight,
+                        keySpacing,
+                        _addLetter,
+                        _removeLetter,
+                        _submitGuess,
+                      ),
+                    ],
                   ),
-                  SizedBox(height: keySpacing),
-                  // Row 2: A S D F G H J K L
-                  _buildKeyboardRow(
-                    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-                    keyWidth,
-                    keyHeight,
-                    keySpacing,
-                    _addLetter,
-                  ),
-                  SizedBox(height: keySpacing),
-                  // Row 3: ENTER Z X C V B N M ⌫
-                  _buildBottomKeyboardRow(
-                    keyWidth,
-                    keyHeight,
-                    keySpacing,
-                    _addLetter,
-                    _removeLetter,
-                    _submitGuess,
-                  ),
-                ],
+                ),
               );
             },
           ),
@@ -1505,7 +1517,7 @@ Widget _letraCaixa(String letra, Color cor, double size) {
   return Container(
     width: size,
     height: size,
-    margin: EdgeInsets.all(3),
+    margin: const EdgeInsets.all(2),
     decoration: BoxDecoration(
       color: cor,
       border: Border.all(color: Colors.grey),
