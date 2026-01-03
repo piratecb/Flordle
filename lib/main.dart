@@ -181,13 +181,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo/Título
-            Icon(
-              Icons.adjust_rounded,
-              size: 64,
-              color: Colors.green[400],
-            ),
-            const SizedBox(height: 16),
             const Text(
               'Escolhe o modo de jogo',
               style: TextStyle(
