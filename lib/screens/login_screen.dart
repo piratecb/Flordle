@@ -86,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result.successMessage ?? 'Email enviado!'),
-            backgroundColor: Colors.green,
+            backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
       }
@@ -97,11 +97,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subtitleColor = isDark ? Colors.grey[400] : Colors.grey[600];
+
     return Scaffold(
-      backgroundColor: Colors.grey[850],
       appBar: AppBar(
         title: Text(_isLogin ? 'Entrar' : 'Criar Conta'),
-        backgroundColor: Colors.grey[700],
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.of(context).pop(false),
@@ -115,16 +117,17 @@ class _LoginScreenState extends State<LoginScreen> {
             Icon(
               Icons.games,
               size: 80,
-              color: Colors.green[400],
+              color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 16),
             Text(
               'Flordle',
               textAlign: TextAlign.center,
               style: TextStyle(
+                fontFamily: 'Nunito',
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: textColor,
                 letterSpacing: 4,
               ),
             ),
@@ -136,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[400],
+                color: subtitleColor,
               ),
             ),
             const SizedBox(height: 32),
@@ -171,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   if (!_isLogin) ...[
                     TextFormField(
                       controller: _nameController,
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: textColor),
                       decoration: _inputDecoration(
                         label: 'Nome',
                         icon: Icons.person,
@@ -188,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   TextFormField(
                     controller: _emailController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: textColor),
                     keyboardType: TextInputType.emailAddress,
                     decoration: _inputDecoration(
                       label: 'Email',
@@ -208,7 +211,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   TextFormField(
                     controller: _passwordController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: textColor),
                     obscureText: _obscurePassword,
                     decoration: _inputDecoration(
                       label: 'Password',
@@ -216,7 +219,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                          color: Colors.grey[400],
+                          color: subtitleColor,
                         ),
                         onPressed: () {
                           setState(() => _obscurePassword = !_obscurePassword);
@@ -255,26 +258,26 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _handleSubmit,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green[600],
+                        backgroundColor: Theme.of(context).colorScheme.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                       child: _isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 24,
                               height: 24,
                               child: CircularProgressIndicator(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onPrimary,
                                 strokeWidth: 2,
                               ),
                             )
                           : Text(
                               _isLogin ? 'Entrar' : 'Criar Conta',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onPrimary,
                               ),
                             ),
                     ),
@@ -304,7 +307,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Text(
                     _isLogin ? 'Criar conta' : 'Entrar',
                     style: TextStyle(
-                      color: Colors.green[400],
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -322,20 +325,24 @@ class _LoginScreenState extends State<LoginScreen> {
     required IconData icon,
     Widget? suffixIcon,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final labelColor = isDark ? Colors.grey[400] : Colors.grey[600];
+    final fillColor = isDark ? Colors.grey[800] : Colors.grey[200];
+
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.grey[400]),
-      prefixIcon: Icon(icon, color: Colors.grey[400]),
+      labelStyle: TextStyle(color: labelColor),
+      prefixIcon: Icon(icon, color: labelColor),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: Colors.grey[800],
+      fillColor: fillColor,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.green[400]!),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:projeto_prog_mobile_wordle/models/game_model.dart';
-import 'package:projeto_prog_mobile_wordle/models/player_stats.dart';
 
 /// Admin panel to view game statistics and player data
 class AdminPainel extends StatefulWidget {
@@ -107,7 +105,7 @@ class _AdminPainelState extends State<AdminPainel> {
               child: ListTile(
                 leading: Icon(
                   data['won'] == true ? Icons.check_circle : Icons.cancel,
-                  color: data['won'] == true ? Colors.green : Colors.red,
+                  color: data['won'] == true ? Theme.of(context).colorScheme.primary : Colors.red,
                 ),
                 title: Text('${data['playerName']}'),
                 subtitle: Text(

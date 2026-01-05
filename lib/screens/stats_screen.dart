@@ -55,10 +55,8 @@ class _StatsScreenState extends State<StatsScreen> {
     final isLoggedIn = user != null && !user.isAnonymous;
 
     return Scaffold(
-      backgroundColor: Colors.grey[850],
       appBar: AppBar(
         title: const Text('Estatísticas'),
-        backgroundColor: Colors.grey[700],
         actions: [
           if (isLoggedIn)
             IconButton(
@@ -92,21 +90,25 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   Widget _buildProfileSection(bool isLoggedIn, dynamic user) {
+    final cardColor = Theme.of(context).cardTheme.color;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.grey[800],
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           CircleAvatar(
             radius: 40,
-            backgroundColor: isLoggedIn ? Colors.green[600] : Colors.grey[600],
+            backgroundColor: isLoggedIn
+                ? Theme.of(context).colorScheme.primary
+                : Colors.grey[600],
             child: Icon(
               isLoggedIn ? Icons.person : Icons.person_outline,
               size: 40,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onPrimary,
             ),
           ),
           const SizedBox(height: 16),
@@ -114,10 +116,10 @@ class _StatsScreenState extends State<StatsScreen> {
             isLoggedIn
                 ? (user?.displayName ?? 'Jogador')
                 : 'Convidado',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           if (isLoggedIn && user?.email != null) ...[
@@ -126,7 +128,9 @@ class _StatsScreenState extends State<StatsScreen> {
               user!.email!,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[400],
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[400]
+                    : Colors.grey[600],
               ),
             ),
           ],
@@ -137,7 +141,9 @@ class _StatsScreenState extends State<StatsScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[400],
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[400]
+                    : Colors.grey[600],
               ),
             ),
             const SizedBox(height: 16),
@@ -146,7 +152,8 @@ class _StatsScreenState extends State<StatsScreen> {
               icon: const Icon(Icons.login),
               label: const Text('Entrar / Criar Conta'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green[600],
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
@@ -197,13 +204,13 @@ class _StatsScreenState extends State<StatsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.green[800],
+                color: Theme.of(context).colorScheme.primary,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 'Média: ${averageAttempts.toStringAsFixed(1)} tentativas',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -214,14 +221,19 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   Widget _buildStatItem(String value, String label) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final subtitleColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.grey[400]
+        : Colors.grey[600];
+
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: textColor,
           ),
         ),
         const SizedBox(height: 4),
@@ -230,7 +242,7 @@ class _StatsScreenState extends State<StatsScreen> {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey[400],
+            color: subtitleColor,
           ),
         ),
       ],
@@ -260,6 +272,9 @@ class _StatsScreenState extends State<StatsScreen> {
           final attempt = (index + 1).toString();
           final count = distribution[attempt] ?? 0;
           final percentage = maxValue > 0 ? count / maxValue : 0.0;
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final textColor = Theme.of(context).colorScheme.onSurface;
+          final barBgColor = isDark ? Colors.grey[700] : Colors.grey[300];
 
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 4),
@@ -269,8 +284,8 @@ class _StatsScreenState extends State<StatsScreen> {
                   width: 20,
                   child: Text(
                     attempt,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: textColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -282,7 +297,7 @@ class _StatsScreenState extends State<StatsScreen> {
                       Container(
                         height: 24,
                         decoration: BoxDecoration(
-                          color: Colors.grey[700],
+                          color: barBgColor,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -291,15 +306,15 @@ class _StatsScreenState extends State<StatsScreen> {
                         child: Container(
                           height: 24,
                           decoration: BoxDecoration(
-                            color: Colors.green[600],
+                            color: Theme.of(context).colorScheme.primary,
                             borderRadius: BorderRadius.circular(4),
                           ),
                           alignment: Alignment.centerRight,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Text(
                             count.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
@@ -9,6 +10,169 @@ import 'package:projeto_prog_mobile_wordle/data/word_list.dart';
 import 'package:projeto_prog_mobile_wordle/screens/login_screen.dart';
 import 'package:projeto_prog_mobile_wordle/screens/stats_screen.dart';
 import 'package:projeto_prog_mobile_wordle/services/auth_service.dart';
+
+// Theme notifier to manage theme state across the app
+class ThemeNotifier extends ChangeNotifier {
+  static const String _themeKey = 'theme_mode';
+  ThemeMode _themeMode = ThemeMode.system;
+
+  ThemeMode get themeMode => _themeMode;
+
+  bool get isDarkMode {
+    if (_themeMode == ThemeMode.system) {
+      final brightness = SchedulerBinding.instance.platformDispatcher.platformBrightness;
+      return brightness == Brightness.dark;
+    }
+    return _themeMode == ThemeMode.dark;
+  }
+
+  ThemeNotifier() {
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final themeString = prefs.getString(_themeKey);
+    if (themeString != null) {
+      _themeMode = ThemeMode.values.firstWhere(
+        (mode) => mode.toString() == themeString,
+        orElse: () => ThemeMode.system,
+      );
+      notifyListeners();
+    }
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themeKey, mode.toString());
+  }
+
+  void toggleTheme() {
+    if (_themeMode == ThemeMode.dark || (_themeMode == ThemeMode.system && isDarkMode)) {
+      setThemeMode(ThemeMode.light);
+    } else {
+      setThemeMode(ThemeMode.dark);
+    }
+  }
+}
+
+// Global theme notifier instance
+final themeNotifier = ThemeNotifier();
+
+// App themes - Custom Color Palette
+// Light: #6d9ac7, #1269cc, #51eefc, #ffffff, #303030
+// Dark: Uses shades of grey instead of white
+// Font: Nunito (readable, friendly, modern)
+class AppThemes {
+  // Custom colors
+  static const Color primaryBlue = Color(0xFF1269CC);
+  static const Color softBlue = Color(0xFF6D9AC7);
+  static const Color accentCyan = Color(0xFF51EEFC);
+  static const Color pureWhite = Color(0xFFFFFFFF);
+  static const Color darkGrey = Color(0xFF303030);
+
+  // Dark theme shades
+  static const Color darkBackground = Color(0xFF1A1A1A);
+  static const Color darkSurface = Color(0xFF252525);
+  static const Color darkCard = Color(0xFF2D2D2D);
+  static const Color lightGrey = Color(0xFFB0B0B0);
+
+  static ThemeData get darkTheme {
+    final baseTheme = ThemeData(brightness: Brightness.dark);
+    return ThemeData(
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: darkBackground,
+      textTheme: baseTheme.textTheme.apply(fontFamily: 'Nunito'),
+      appBarTheme: AppBarTheme(
+        backgroundColor: darkSurface,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: lightGrey),
+        titleTextStyle: const TextStyle(
+          fontFamily: 'Nunito',
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: lightGrey,
+        ),
+      ),
+      colorScheme: const ColorScheme.dark(
+        primary: primaryBlue,
+        secondary: accentCyan,
+        tertiary: softBlue,
+        surface: darkSurface,
+        onSurface: lightGrey,
+        onPrimary: pureWhite,
+        onSecondary: darkGrey,
+      ),
+      cardTheme: const CardThemeData(
+        color: darkCard,
+      ),
+      iconTheme: const IconThemeData(color: lightGrey),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryBlue,
+          foregroundColor: pureWhite,
+          textStyle: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.bold),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: accentCyan,
+          textStyle: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+
+  static ThemeData get lightTheme {
+    final baseTheme = ThemeData(brightness: Brightness.light);
+    return ThemeData(
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: pureWhite,
+      textTheme: baseTheme.textTheme.apply(fontFamily: 'Nunito'),
+      appBarTheme: AppBarTheme(
+        backgroundColor: softBlue.withValues(alpha: 0.3),
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: darkGrey),
+        titleTextStyle: const TextStyle(
+          fontFamily: 'Nunito',
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: darkGrey,
+        ),
+      ),
+      colorScheme: const ColorScheme.light(
+        primary: primaryBlue,
+        secondary: accentCyan,
+        tertiary: softBlue,
+        surface: pureWhite,
+        onSurface: darkGrey,
+        onPrimary: pureWhite,
+        onSecondary: darkGrey,
+      ),
+      cardTheme: CardThemeData(
+        color: softBlue.withValues(alpha: 0.15),
+      ),
+      iconTheme: const IconThemeData(color: darkGrey),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryBlue,
+          foregroundColor: pureWhite,
+          textStyle: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.bold),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primaryBlue,
+          textStyle: const TextStyle(fontFamily: 'Nunito', fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,13 +195,21 @@ class wordle extends StatefulWidget {
 class _wordleState extends State<wordle> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const HomeScreen(),
-        '/login': (context) => LoginScreen(),
-        '/stats': (context) => StatsScreen(),
+    return AnimatedBuilder(
+      animation: themeNotifier,
+      builder: (context, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppThemes.lightTheme,
+          darkTheme: AppThemes.darkTheme,
+          themeMode: themeNotifier.themeMode,
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const HomeScreen(),
+            '/login': (context) => LoginScreen(),
+            '/stats': (context) => StatsScreen(),
+          },
+        );
       },
     );
   }
@@ -67,20 +239,126 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _showHowToPlayDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(
+                Icons.help_outline,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
+              const Text('Como jogar'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'O flordle é como o jogo da forca, mas sem o boneco. Tenta adivinhar qual é a palavra de hoje escrevendo uma palavra e descobrindo letras aos poucos.',
+                ),
+                const SizedBox(height: 16),
+                _buildColorHint(
+                  context,
+                  Colors.green,
+                  'Letra verde:',
+                  'a letra está na palavra e está no local correto',
+                ),
+                const SizedBox(height: 8),
+                _buildColorHint(
+                  context,
+                  Colors.amber,
+                  'Letra amarela:',
+                  'a letra está na palavra mas não está no local correto',
+                ),
+                const SizedBox(height: 8),
+                _buildColorHint(
+                  context,
+                  Colors.grey,
+                  'Letra cinzenta:',
+                  'a letra não está na palavra.',
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Tens 6 tentativas para descobrir, boa sorte!',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Nota: algumas palavras usam a mesma letra duas vezes, por isso tem atenção!',
+                  style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Entendi!'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildColorHint(BuildContext context, Color color, String title, String description) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+              children: [
+                TextSpan(
+                  text: '$title ',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                TextSpan(text: description),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final iconColor = Theme.of(context).colorScheme.onSurface;
+
     return Scaffold(
-      backgroundColor: Colors.grey[900],
       appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
         leading: _selectedMode != null
             ? IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                icon: Icon(Icons.arrow_back, color: iconColor),
                 tooltip: 'Voltar ao menu',
                 onPressed: _backToMenu,
               )
-            : null,
+            : IconButton(
+                icon: Icon(Icons.info_outline, color: iconColor),
+                tooltip: 'Como jogar',
+                onPressed: () => _showHowToPlayDialog(context),
+              ),
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -89,7 +367,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Colors.green[400],
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             Text(
@@ -97,22 +375,32 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Colors.amber[600],
+                color: Theme.of(context).colorScheme.secondary,
               ),
             ),
-            const Text(
+            Text(
               'ORDLE',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: iconColor,
                 letterSpacing: 2,
               ),
             ),
           ],
         ),
-        backgroundColor: Colors.grey[850],
         actions: [
+          // Theme toggle button
+          IconButton(
+            icon: Icon(
+              isDark ? Icons.dark_mode : Icons.light_mode,
+              color: isDark ? Colors.amber[300] : Colors.orange[400],
+            ),
+            tooltip: isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro',
+            onPressed: () {
+              themeNotifier.toggleTheme();
+            },
+          ),
           StreamBuilder(
             stream: _authService.authStateChanges,
             builder: (context, snapshot) {
@@ -125,7 +413,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
+                      icon: Icon(Icons.bar_chart_rounded, color: iconColor),
                       tooltip: 'Estatísticas',
                       onPressed: () {
                         Navigator.pushNamed(context, '/stats');
@@ -134,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     IconButton(
                       icon: Icon(
                         Icons.account_circle_outlined,
-                        color: Colors.white,
+                        color: iconColor,
                         size: 28,
                       ),
                       tooltip: 'Entrar',
@@ -149,7 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
               return IconButton(
                 icon: Icon(
                   isLoggedIn ? Icons.account_circle : Icons.account_circle_outlined,
-                  color: isLoggedIn ? Colors.green[400] : Colors.white,
+                  color: isLoggedIn ? Theme.of(context).colorScheme.primary : iconColor,
                   size: 28,
                 ),
                 tooltip: isLoggedIn ? 'Perfil' : 'Entrar',
@@ -175,18 +463,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildModeSelection() {
+    final textColor = Theme.of(context).colorScheme.onSurface;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               'Escolhe o modo de jogo',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: textColor,
               ),
             ),
             const SizedBox(height: 48),
@@ -196,7 +486,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icons.calendar_today_rounded,
               title: 'Palavra do Dia',
               subtitle: 'Uma palavra por dia para todos os jogadores',
-              color: Colors.green[600]!,
+              color: Theme.of(context).colorScheme.primary,
               onTap: () => _selectMode(GameMode.daily),
             ),
 
@@ -207,7 +497,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icons.all_inclusive_rounded,
               title: 'Modo Ilimitado',
               subtitle: 'Joga quantas vezes quiseres com palavras aleatórias',
-              color: Colors.amber[700]!,
+              color: Theme.of(context).colorScheme.secondary,
               onTap: () => _selectMode(GameMode.unlimited),
             ),
 
@@ -245,13 +535,18 @@ class _HomeScreenState extends State<HomeScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final cardColor = Theme.of(context).cardTheme.color;
+    final subtitleColor = Theme.of(context).brightness == Brightness.dark
+        ? Colors.grey[400]
+        : Colors.grey[600];
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.grey[850],
+          color: cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: color.withAlpha(128), width: 2),
         ),
@@ -283,7 +578,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     subtitle,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[400],
+                      color: subtitleColor,
                     ),
                   ),
                 ],
@@ -817,29 +1112,31 @@ class _WordleBodyState extends State<WordleBody> {
 
   // Get color from color code
   Color _getColorFromCode(int code) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (code) {
       case 3:
-        return Colors.green; // Correct position
+        return Colors.green; // Correct position (classic green)
       case 2:
-        return Colors.amber[700]!; // Wrong position (yellow/amber)
+        return Colors.amber[700]!; // Wrong position (classic yellow/amber)
       case 1:
-        return Colors.grey[700]!; // Wrong letter
+        return isDark ? Colors.grey[700]! : Colors.grey[600]!; // Wrong letter (darker in light mode)
       default:
-        return Colors.grey[900]!; // Default/empty
+        return isDark ? Colors.grey[900]! : Colors.grey[500]!; // Default/empty (darker in light mode)
     }
   }
 
   // Get keyboard key color from color code
   Color _getKeyboardColorFromCode(int code) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     switch (code) {
       case 3:
-        return Colors.green; // Correct position
+        return Colors.green; // Correct position (keep classic green)
       case 2:
-        return Colors.amber[700]!; // Wrong position (yellow/amber)
+        return Colors.amber[700]!; // Wrong position (keep classic yellow/amber)
       case 1:
-        return Colors.grey[700]!; // Wrong letter
+        return isDark ? Colors.grey[700]! : Colors.grey[600]!; // Wrong letter (darker in light mode)
       default:
-        return Colors.grey[300]!; // Default keyboard color
+        return isDark ? Colors.grey[300]! : Colors.grey[400]!; // Default keyboard color
     }
   }
 
@@ -855,52 +1152,58 @@ class _WordleBodyState extends State<WordleBody> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[850],
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: Column(
-          children: [
-            Icon(
-              won ? Icons.celebration_rounded : Icons.sentiment_dissatisfied_rounded,
-              size: 48,
-              color: won ? Colors.amber[400] : Colors.grey[400],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              won ? 'Parabéns!' : 'Fim de jogo',
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final dialogBg = isDark ? Colors.grey[850] : Colors.grey[100];
+        final textColor = isDark ? Colors.white : Colors.black87;
+        final subtextColor = isDark ? Colors.white70 : Colors.black54;
+
+        return AlertDialog(
+          backgroundColor: dialogBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Column(
+            children: [
+              Icon(
+                won ? Icons.celebration_rounded : Icons.sentiment_dissatisfied_rounded,
+                size: 48,
+                color: won ? Colors.amber[400] : Colors.grey[400],
               ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              won
-                  ? 'Acertaste a palavra em ${currentRow + 1} tentativa${currentRow > 0 ? 's' : ''}!'
-                  : 'A palavra era:',
-              style: const TextStyle(fontSize: 16, color: Colors.white70),
-              textAlign: TextAlign.center,
-            ),
-            if (!won) ...[
               const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.green[700],
-                  borderRadius: BorderRadius.circular(8),
+              Text(
+                won ? 'Parabéns!' : 'Fim de jogo',
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
                 ),
-                child: Text(
-                  targetWord,
-                  style: const TextStyle(
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                won
+                    ? 'Acertaste a palavra em ${currentRow + 1} tentativa${currentRow > 0 ? 's' : ''}!'
+                    : 'A palavra era:',
+                style: TextStyle(fontSize: 16, color: subtextColor),
+                textAlign: TextAlign.center,
+              ),
+              if (!won) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    targetWord,
+                    style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onPrimary,
                     letterSpacing: 4,
                   ),
                 ),
@@ -911,13 +1214,13 @@ class _WordleBodyState extends State<WordleBody> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle, color: Colors.green[400], size: 16),
+                  Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary, size: 16),
                   const SizedBox(width: 4),
                   Text(
                     'Estatísticas guardadas',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.green[400],
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 ],
@@ -1002,7 +1305,8 @@ class _WordleBodyState extends State<WordleBody> {
               ),
             ),
         ],
-      ),
+      );
+      },
     );
   }
 
@@ -1056,269 +1360,305 @@ class _WordleBodyState extends State<WordleBody> {
       );
     }
 
-    return Column(
-      children: [
-        // Banner para jogo diário completado
-        if (widget.gameMode == GameMode.daily && _dailyGameCompleted)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            color: won ? Colors.green[700] : Colors.grey[700],
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  won ? Icons.emoji_events : Icons.calendar_today,
-                  color: Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  won
-                      ? 'Acertaste em ${currentRow} tentativa${currentRow > 1 ? 's' : ''}! Volta amanhã.'
-                      : 'Já jogaste hoje. Volta amanhã!',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Check if we're in landscape mode (width > height)
+        final isLandscape = constraints.maxWidth > constraints.maxHeight;
+
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
             ),
-          ),
-        // Rapid Fire timer display
-        if (widget.gameMode == GameMode.rapidFire && !gameOver)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.timer_rounded,
-                  color: _secondsRemaining <= 5 ? Colors.red[400] : Colors.white,
-                  size: 20,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '$_secondsRemaining',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: _secondsRemaining <= 5 ? Colors.red[400] : Colors.white,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  's',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[400],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        // Luck mode UI - Get Letters button and available letters display
-        if (widget.gameMode == GameMode.luck && !gameOver)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Get Letters Button
-                ElevatedButton.icon(
-                  onPressed: _hasRolledThisRound ? null : _rollLuckLetters,
-                  icon: Icon(
-                    Icons.casino_rounded,
-                    color: _hasRolledThisRound ? Colors.grey[600] : Colors.white,
-                    size: 18,
-                  ),
-                  label: Text(
-                    _hasRolledThisRound ? 'Já obtiveste letras' : 'Obter Letras',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: _hasRolledThisRound ? Colors.grey[600] : Colors.white,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _hasRolledThisRound ? Colors.grey[800] : Colors.purple[600],
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Display available letters
-                if (_luckAvailableLetters.isNotEmpty || _luckPermanentLetters.isNotEmpty)
-                  Wrap(
-                    spacing: 4,
-                    runSpacing: 4,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      // Show permanent letters (green) first
-                      ..._luckPermanentLetters.map((letter) => Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.green[300]!, width: 1),
-                        ),
-                        child: Center(
-                          child: Text(
-                            letter,
+                // Top section with banners and grid
+                Column(
+                  children: [
+                    // Banner para jogo diário completado
+                    if (widget.gameMode == GameMode.daily && _dailyGameCompleted)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                      color: won ? Colors.green[700] : Colors.grey[700],
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            won ? Icons.emoji_events : Icons.calendar_today,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            won
+                                ? 'Acertaste em $currentRow tentativa${currentRow > 1 ? 's' : ''}! Volta amanhã.'
+                                : 'Já jogaste hoje. Volta amanhã!',
                             style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
                               color: Colors.white,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
-                      )),
-                      // Show temporary available letters (purple)
-                      ..._luckAvailableLetters
-                          .where((l) => !_luckPermanentLetters.contains(l))
-                          .map((letter) => Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: Colors.purple[600],
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Center(
-                          child: Text(
-                            letter,
-                            style: const TextStyle(
-                              fontSize: 14,
+                        ],
+                      ),
+                    ),
+                  // Rapid Fire timer display
+                  if (widget.gameMode == GameMode.rapidFire && !gameOver)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.timer_rounded,
+                            color: _secondsRemaining <= 5
+                                ? Colors.red[400]
+                                : (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            '$_secondsRemaining',
+                            style: TextStyle(
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: _secondsRemaining <= 5
+                                  ? Colors.red[400]
+                                  : (Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
                             ),
                           ),
-                        ),
-                      )),
-                    ],
-                  )
-                else
-                  Text(
-                    'Clica em "Obter Letras" para começar!',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[400],
-                      fontStyle: FontStyle.italic,
+                          const SizedBox(width: 4),
+                          Text(
+                            's',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                // Show hint about formable words
-                if (_luckAvailableLetters.isNotEmpty || _luckPermanentLetters.isNotEmpty)
+                  // Luck mode UI - Get Letters button and available letters display
+                  if (widget.gameMode == GameMode.luck && !gameOver)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                      child: Column(
+                        children: [
+                          // Get Letters Button
+                          ElevatedButton.icon(
+                            onPressed: _hasRolledThisRound ? null : _rollLuckLetters,
+                            icon: Icon(
+                              Icons.casino_rounded,
+                              color: _hasRolledThisRound ? Colors.grey[600] : Colors.white,
+                              size: 18,
+                            ),
+                            label: Text(
+                              _hasRolledThisRound ? 'Já obtiveste letras' : 'Obter Letras',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: _hasRolledThisRound ? Colors.grey[600] : Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _hasRolledThisRound ? Colors.grey[800] : Colors.purple[600],
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Display available letters
+                          if (_luckAvailableLetters.isNotEmpty || _luckPermanentLetters.isNotEmpty)
+                            Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              alignment: WrapAlignment.center,
+                              children: [
+                                // Show permanent letters (green) first
+                                ..._luckPermanentLetters.map((letter) => Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: Colors.green,
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: Colors.green[300]!, width: 1),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      letter,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                )),
+                                // Show temporary available letters (purple)
+                                ..._luckAvailableLetters
+                                    .where((l) => !_luckPermanentLetters.contains(l))
+                                    .map((letter) => Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: Colors.purple[600],
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      letter,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                )),
+                              ],
+                            )
+                          else
+                            Text(
+                              'Clica em "Obter Letras" para começar!',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[400],
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          // Show hint about formable words
+                          if (_luckAvailableLetters.isNotEmpty || _luckPermanentLetters.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Builder(
+                                builder: (context) {
+                                  int formableCount = _getFormableWords().length;
+                                  return Text(
+                                    'Podes formar $formableCount palavra${formableCount != 1 ? 's' : ''} válida${formableCount != 1 ? 's' : ''}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: formableCount > 0 ? Colors.green[400] : Colors.red[400],
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  // Game Grid - Responsive letter boxes
                   Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Builder(
-                      builder: (context) {
-                        int formableCount = _getFormableWords().length;
-                        return Text(
-                          'Podes formar $formableCount palavra${formableCount != 1 ? 's' : ''} válida${formableCount != 1 ? 's' : ''}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: formableCount > 0 ? Colors.green[400] : Colors.red[400],
-                            fontStyle: FontStyle.italic,
-                          ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.0,
+                      vertical: isLandscape ? 4.0 : 6.0,
+                    ),
+                    child: LayoutBuilder(
+                      builder: (context, gridConstraints) {
+                        // Calculate box size based on available width
+                        // 5 boxes with margins (6px each side = 12px per box)
+                        final double maxBoxWidth = (gridConstraints.maxWidth - (5 * 6)) / 5;
+                        // Smaller boxes in landscape mode
+                        final double boxSize = isLandscape
+                            ? maxBoxWidth.clamp(32.0, 44.0)
+                            : maxBoxWidth.clamp(36.0, 56.0);
+
+                        return Column(
+                          children: List.generate(maxAttempts, (rowIndex) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(wordLength, (colIndex) {
+                                return _letraCaixa(
+                                  grid[rowIndex][colIndex],
+                                  _getColorFromCode(colorGrid[rowIndex][colIndex]),
+                                  boxSize,
+                                );
+                              }),
+                            );
+                          }),
                         );
                       },
                     ),
                   ),
+                  ],
+                ),
+                // Bottom section with keyboard
+                Column(
+                  children: [
+                    // Responsive Keyboard (escondido se jogo diário completado)
+                    if (!(widget.gameMode == GameMode.daily && _dailyGameCompleted))
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.0,
+                          vertical: isLandscape ? 2.0 : 4.0,
+                        ),
+                        child: LayoutBuilder(
+                          builder: (context, keyboardConstraints) {
+                            // Calculate key sizes based on available width with max limit
+                            final double keySpacing = 4.0;
+                            final int keysInTopRow = 10;
+                            final double availableWidth = keyboardConstraints.maxWidth - (keySpacing * (keysInTopRow + 1));
+                            // Use all available space, with max limit of 64px per key
+                            final double calculatedKeyWidth = availableWidth / keysInTopRow;
+                            final double keyWidth = calculatedKeyWidth.clamp(28.0, 64.0);
+                            final double keyHeight = keyWidth * 1.5;
+
+                            // Center the keyboard by calculating total width
+                            final double totalKeyboardWidth = (keyWidth * keysInTopRow) + (keySpacing * (keysInTopRow + 1));
+
+                            return Center(
+                              child: SizedBox(
+                                width: totalKeyboardWidth,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Row 1: Q W E R T Y U I O P
+                                    _buildKeyboardRow(
+                                      ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+                                      keyWidth,
+                                      keyHeight,
+                                      keySpacing,
+                                      _addLetter,
+                                    ),
+                                    SizedBox(height: keySpacing),
+                                    // Row 2: A S D F G H J K L
+                                    _buildKeyboardRow(
+                                      ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+                                      keyWidth,
+                                      keyHeight,
+                                      keySpacing,
+                                      _addLetter,
+                                    ),
+                                    SizedBox(height: keySpacing),
+                                    // Row 3: ENTER Z X C V B N M ⌫
+                                    _buildBottomKeyboardRow(
+                                      keyWidth,
+                                      keyHeight,
+                                      keySpacing,
+                                      _addLetter,
+                                      _removeLetter,
+                                      _submitGuess,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    SizedBox(height: isLandscape ? 4 : 8),
+                  ],
+                ),
               ],
             ),
           ),
-        // Game Grid - Responsive letter boxes
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Calculate box size based on available width
-              // 5 boxes with margins (6px each side = 12px per box)
-              final double maxBoxWidth = (constraints.maxWidth - (5 * 6)) / 5;
-              // Limit the size for larger screens - reduced for better fit
-              final double boxSize = maxBoxWidth.clamp(36.0, 56.0);
-
-              return Column(
-                children: List.generate(maxAttempts, (rowIndex) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(wordLength, (colIndex) {
-                      return _letraCaixa(
-                        grid[rowIndex][colIndex],
-                        _getColorFromCode(colorGrid[rowIndex][colIndex]),
-                        boxSize,
-                      );
-                    }),
-                  );
-                }),
-              );
-            },
-          ),
-        ),
-        const Spacer(),
-        // Responsive Keyboard (escondido se jogo diário completado)
-        if (!(widget.gameMode == GameMode.daily && _dailyGameCompleted))
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Calculate key sizes based on available width with max limit
-              final double keySpacing = 4.0;
-              final int keysInTopRow = 10;
-              final double availableWidth = constraints.maxWidth - (keySpacing * (keysInTopRow + 1));
-              // Limit max key width for larger screens (PC)
-              final double calculatedKeyWidth = availableWidth / keysInTopRow;
-              final double keyWidth = calculatedKeyWidth.clamp(26.0, 42.0);
-              final double keyHeight = keyWidth * 1.3;
-
-              // Center the keyboard by calculating total width
-              final double totalKeyboardWidth = (keyWidth * keysInTopRow) + (keySpacing * (keysInTopRow + 1));
-
-              return Center(
-                child: SizedBox(
-                  width: totalKeyboardWidth,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Row 1: Q W E R T Y U I O P
-                      _buildKeyboardRow(
-                        ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-                        keyWidth,
-                        keyHeight,
-                        keySpacing,
-                        _addLetter,
-                      ),
-                      SizedBox(height: keySpacing),
-                      // Row 2: A S D F G H J K L
-                      _buildKeyboardRow(
-                        ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-                        keyWidth,
-                        keyHeight,
-                        keySpacing,
-                        _addLetter,
-                      ),
-                      SizedBox(height: keySpacing),
-                      // Row 3: ENTER Z X C V B N M ⌫
-                      _buildBottomKeyboardRow(
-                        keyWidth,
-                        keyHeight,
-                        keySpacing,
-                        _addLetter,
-                        _removeLetter,
-                        _submitGuess,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-        SizedBox(height: 4),
-      ],
+        );
+      },
     );
   }
 
